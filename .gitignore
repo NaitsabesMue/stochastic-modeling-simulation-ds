@@ -1,0 +1,23 @@
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.synctex.gz(busy)
+*.toc
+*.out
+*.vrb
+*.lof
+*.lot
+*.lol
+*.bbl
+*.blg
+
+# Beamer-specific temp files
+*.nav
+*.snm
+
+# Backup files
+*~
+*.bak
