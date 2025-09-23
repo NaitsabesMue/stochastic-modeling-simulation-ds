@@ -1,6 +1,7 @@
 
 \documentclass{beamer}
 \usepackage[utf8]{inputenc}
+\usetheme{AMU}
 \usepackage{amsmath, amssymb}
 \usepackage{graphicx}
 \usepackage{tikz}
@@ -11,8 +12,6 @@
     \node[text width=1.3cm, align=center, font=\scriptsize\bfseries, text=#1!80!black] at (0.8,0.8) {#2};
   \end{tikzpicture}%
 }
-\usetheme{Madrid}
-
 \title[Stochastic Models and Simulation]{Stochastic Models and Simulation: Motivation \& Poisson Recap}
 \subtitle{Why Poisson Processes, Queues, and Renewal Theory Matter}
 \author{Sebastian Müller}
@@ -212,6 +211,32 @@
     \item If arrivals thin independently with prob. $0.3$, what is the new rate?
     \item How would you simulate the time until the second arrival in Python?
   \end{itemize}
+\end{frame}
+
+\section{Hands-On Kickoff}
+
+\begin{frame}{Exercise: Plain Python Warm-Up}
+  \begin{enumerate}
+    \item Import \texttt{numpy as np}; set \texttt{rng = np.random.default\_rng(42)}.
+    \item Let \texttt{lam = 4} per hour; compute \texttt{lambda\_window = lam * 0.5}.
+    \item Simulate \texttt{n\_windows = 1000} half-hour counts via \texttt{rng.poisson(lam=lambda\_window, size=n\_windows)}.
+    \item Report sample mean/variance and compare to the theoretical value $\lambda = 2$.
+    \item Empirically estimate $\mathbb{P}[X \ge 1]$ by checking \texttt{counts > 0}.
+  \end{enumerate}
+  \vspace{0.6em}
+  {\footnotesize Deliverables: short script + markdown cell summarising fit vs. theory.}
+\end{frame}
+
+\begin{frame}{Exercise: SimPy Arrival Stream}
+  \begin{enumerate}
+    \item Import \texttt{numpy as np} and \texttt{simpy}; create \texttt{env = simpy.Environment()} and define generator \texttt{arrival(env)}.
+    \item Inside the generator, loop: yield \texttt{env.timeout(np.random.exponential(1/lam))}.
+    \item For each arrival, log the timestamp and append to a list for post-analysis.
+    \item Run with \texttt{lam = 4} per hour for simulated duration \texttt{env.run(until=8)} (two hours).
+    \item Plot inter-arrival histogram and overlay the exponential density with rate $\lambda$.
+  \end{enumerate}
+  \vspace{0.6em}
+  {\footnotesize Stretch goal: promote the logged arrivals into a simple M/M/1 queue and compare waiting times.}
 \end{frame}
 
 \begin{frame}{Summary}
