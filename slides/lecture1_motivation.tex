@@ -152,7 +152,7 @@
 \begin{frame}{Recap: Poisson Random Variable}
   \begin{itemize}
     \item Parameter $\lambda>0$; support on $\{0,1,2,\dots\}$.
-    \item Probability mass function: $\mathbb{P}[X=k] = e^{-\lambda}\tfrac{\lambda^k}{k!}$.
+    \item Probability mass function: $\mathbb{P}(X=k) = e^{-\lambda}\tfrac{\lambda^k}{k!}$.
     \item Models the \textbf{count of events} in a fixed interval given independent events at rate $\lambda$.
     \item Examples: arrivals per minute, defects per meter, emails per hour.
   \end{itemize}
@@ -221,7 +221,7 @@
     \item Let \texttt{lam = 4} per hour; compute \texttt{lambda\_window = lam * 0.5}.
     \item Simulate \texttt{n\_windows = 1000} half-hour counts via \texttt{rng.poisson(lam=lambda\_window, size=n\_windows)}.
     \item Report sample mean/variance and compare to the theoretical value $\lambda = 2$.
-    \item Empirically estimate $\mathbb{P}[X \ge 1]$ by checking \texttt{counts > 0}.
+    \item Empirically estimate $\mathbb{P}(X \ge 1)$ by checking \texttt{counts > 0}.
   \end{enumerate}
   \vspace{0.6em}
   {\footnotesize Deliverables: short script + markdown cell summarising fit vs. theory.}
