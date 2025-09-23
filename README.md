@@ -21,7 +21,10 @@ This repository hosts materials for the optional M2 Data Science course on Poiss
   - Team or individual project built around a stochastic system of your choice.
   - 10-minute presentation during the final session.
   - Concise written report (~5 pages) summarising model, assumptions, experiments, and insights.
-- **Final Mark**: \(\max(\text{Exam},\ 0.5\,\text{CC} + 0.5\,\text{Exam})\). In other words, a strong project can compensate a weaker control, but never the opposite.
+- **Final Mark**: $
+  \max\left(\text{Exam},\ 0.5\,\text{CC} + 0.5\,\text{Exam}\right)
+  $.
+  In other words, a strong CC can compensate a weaker final project, but never the opposite.
 
 ## Get Started
 Coming soon — notebooks will be published progressively during the course.
