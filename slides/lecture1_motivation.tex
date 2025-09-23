@@ -1,0 +1,228 @@
+
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+
+\newcommand{\usecasebadge}[2]{%
+  \begin{tikzpicture}[baseline={(current bounding box.center)}]
+    \fill[#1!20, draw=#1!70!black, rounded corners=3pt] (0,0) rectangle (1.6,1.6);
+    \node[text width=1.3cm, align=center, font=\scriptsize\bfseries, text=#1!80!black] at (0.8,0.8) {#2};
+  \end{tikzpicture}%
+}
+\usetheme{Madrid}
+
+\title[Stochastic Models and Simulation]{Stochastic Models and Simulation: Motivation \& Poisson Recap}
+\subtitle{Why Poisson Processes, Queues, and Renewal Theory Matter}
+\author{Sebastian Müller}
+\date{Lecture 1}
+
+\begin{document}
+
+\section{Motivation}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Framing the Gap}
+  \begin{itemize}
+    \item Most data science programs focus on regression, classification, and ML.
+    \item But what about systems that evolve \textbf{over time} and under \textbf{uncertainty}?
+    \item Key questions:
+    \begin{itemize}
+      \item How long do users wait when servers are busy?
+      \item When will a machine fail again?
+      \item What’s the expected delay in a hospital triage?
+    \end{itemize}
+    \item These are not supervised learning problems – they require \textbf{stochastic models}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Use Case: Cloud Infrastructure}
+  \begin{columns}[T]
+    \begin{column}{0.32\textwidth}
+      \centering
+      \usecasebadge{blue}{Cloud\\Infra}
+      \\[0.6em]
+      {\footnotesize Auto-scale compute to match bursty traffic.}
+    \end{column}
+    \begin{column}{0.68\textwidth}
+      \begin{itemize}
+        \item Servers handle requests arriving randomly over time.
+        \item Resource allocation modeled via \textbf{Poisson arrivals} + \textbf{queuing models}.
+        \item Objective: minimize latency, avoid overload.
+      \end{itemize}
+      \vspace{0.6em}
+      \textit{Example: AWS Auto Scaling uses modeled request rates to provision resources.}
+      \\[0.3em]
+      {\footnotesize AWS Auto Scaling monitors metrics (CPU, request count, latency) and automatically scales EC2 instances, containers, or serverless capacity up or down to match demand while controlling cost.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Use Case: Call Centers}
+  \begin{columns}[T]
+    \begin{column}{0.32\textwidth}
+      \centering
+      \usecasebadge{teal}{Call\\Center}
+      \\[0.6em]
+      {\footnotesize Right-size staffing, manage service levels.}
+    \end{column}
+    \begin{column}{0.68\textwidth}
+      \begin{itemize}
+        \item Incoming calls $\to$ arrival process (Poisson or empirical).
+        \item Limited agents $\to$ queuing system (M/M/k).
+        \item Metrics: average wait time, service levels.
+      \end{itemize}
+      \vspace{0.6em}
+      \textit{Used by companies to staff efficiently and reduce wait times.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Use Case: Hospitals}
+  \begin{columns}[T]
+    \begin{column}{0.32\textwidth}
+      \centering
+      \usecasebadge{red}{Health\\Care}
+      \\[0.6em]
+      {\footnotesize Triage limited resources across care stages.}
+    \end{column}
+    \begin{column}{0.68\textwidth}
+      \begin{itemize}
+        \item Patient arrivals: random (empirical or Poisson).
+        \item Multi-stage service (triage, doctor, tests).
+        \item Queueing + renewal theory to estimate wait times and allocate staff.
+      \end{itemize}
+      \vspace{0.6em}
+      \textit{Used during COVID-19 to plan emergency capacity.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Use Case: Predictive Maintenance}
+  \begin{columns}[T]
+    \begin{column}{0.32\textwidth}
+      \centering
+      \usecasebadge{orange}{Industry\\4.0}
+      \\[0.6em]
+      {\footnotesize Balance uptime, spare parts, and repair crews.}
+    \end{column}
+    \begin{column}{0.68\textwidth}
+      \begin{itemize}
+        \item Machines degrade over time $\to$ failure is random.
+        \item Renewal processes model time-to-failure and repair.
+        \item Used in manufacturing and IoT to schedule maintenance.
+      \end{itemize}
+      \vspace{0.6em}
+      \textit{Industrial example: Siemens, Bosch use similar models.}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Use Case: Crypto and Finance}
+  \begin{columns}[T]
+    \begin{column}{0.32\textwidth}
+      \centering
+      \usecasebadge{purple}{Markets}
+      \\[0.6em]
+      {\footnotesize Quantify latency, auctions, and microstructure.}
+    \end{column}
+    \begin{column}{0.68\textwidth}
+      \begin{itemize}
+        \item Order arrival in exchanges modeled as Poisson processes.
+        \item Queueing logic in Ethereum gas auctions or Solana validator schedules.
+        \item Stochastic models used to analyze MEV, fairness, and latency.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Why Simulate?}
+  \begin{itemize}
+    \item Closed-form expressions are rare or complicated.
+    \item Simulation provides robust, interpretable insight.
+    \item We’ll use Python (with SimPy) to model real systems.
+  \end{itemize}
+\end{frame}
+
+\section{Poisson Refresher}
+
+\begin{frame}{Recap: Poisson Random Variable}
+  \begin{itemize}
+    \item Parameter $\lambda>0$; support on $\{0,1,2,\dots\}$.
+    \item Probability mass function: $\mathbb{P}[X=k] = e^{-\lambda}\tfrac{\lambda^k}{k!}$.
+    \item Models the \textbf{count of events} in a fixed interval given independent events at rate $\lambda$.
+    \item Examples: arrivals per minute, defects per meter, emails per hour.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Key Properties}
+  \begin{itemize}
+    \item Expectation and variance coincide: $\mathbb{E}[X]=\operatorname{Var}(X)=\lambda$.
+    \item \textbf{Aggregation}: sum of independent $\mathrm{Poi}(\lambda_i)$ is $\mathrm{Poi}(\sum \lambda_i)$.
+    \item \textbf{Thinning}: keep each event with prob. $p$ $\Rightarrow$ result is $\mathrm{Poi}(p\lambda)$.
+    \item Moment generating function: $M_X(t)=\exp\left(\lambda(e^t-1)\right)$.
+    \item Probability of $\geq 1$ event: $1-e^{-\lambda}$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Poisson as a Binomial Limit}
+  \begin{itemize}
+    \item Start with $\mathrm{Bin}(n,p)$ where $n$ large, $p$ small, and $np\to\lambda$.
+    \item Then $\mathrm{Bin}(n,p)$ converges to $\mathrm{Poi}(\lambda)$.
+    \item Interpretation: many independent trials with tiny success probability.
+    \item Use for rare-event approximation and sanity-checking rate estimates.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{From Counts to Arrival Times}
+  \begin{itemize}
+    \item If counts per interval follow $\mathrm{Poi}(\lambda)$, inter-arrival times are $\mathrm{Exp}(\lambda)$.
+    \item Memorylessness of the exponential $\Rightarrow$ independent increments for counts.
+    \item This coupling defines the homogeneous Poisson process.
+    \item Queues and renewal models rely on this structure.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Poisson in Simulation}
+  \begin{itemize}
+    \item Python: `numpy.random.poisson(lam, size)` samples counts directly.
+    \item For arrival times, sample exponentials: \texttt{np.random.exponential(1/lambda\_rate)}.
+    \item In SimPy, schedule arrivals via `env.timeout(...)` using exponential draws.
+    \item Validate simulated averages and variances against $\lambda$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Worked Example: Probability of an Arrival}
+  \begin{itemize}
+    \item Help desk receives on average $\lambda = 4$ tickets per hour.
+    \item For a 30 minute window: $\lambda_{0.5h} = 4 \times 0.5 = 2$.
+    \item Probability of at least one ticket: $1 - e^{-2} \approx 0.865$.
+    \item Exact prob. of zero tickets in that window: $e^{-2} \approx 0.135$.
+    \item Quick sanity check: expected tickets in 30 min is also $2$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Checkpoint}
+  \begin{itemize}
+    \item What data or diagnostics would tell you a Poisson model is a poor fit?
+    \item If arrivals thin independently with prob. $0.3$, what is the new rate?
+    \item How would you simulate the time until the second arrival in Python?
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Summary}
+  \begin{itemize}
+    \item Stochastic models give tools to reason under uncertainty.
+    \item Motivation: systems in cloud, healthcare, manufacturing, finance.
+    \item Foundations: Poisson counts, thinning/aggregation, exponential inter-arrivals.
+    \item Next: construct Poisson processes and simulate queues.
+  \end{itemize}
+  \vspace{1em}
+  \textit{"When data meets time, and time meets uncertainty — we need more than ML."}
+\end{frame}
+
+\end{document}
