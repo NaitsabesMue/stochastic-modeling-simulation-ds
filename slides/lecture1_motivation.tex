@@ -25,6 +25,18 @@
   \titlepage
 \end{frame}
 
+\begin{frame}{Course Roadmap}
+  \begin{itemize}
+    \item \textbf{Lecture 1}: Motivation, Poisson recap, simulation mindset.
+    \item \textbf{Lecture 2}: Queueing theory basics, Markovian queues, simulation patterns.
+    \item \textbf{Lectures 3--4}: Renewal theory, regenerative analysis, heavy tails.
+    \item \textbf{Lectures 5--6}: Networks, resource allocation, optimisation under uncertainty.
+    \item \textbf{Lectures 7--8}: Project clinics, validation strategies, presentations.
+  \end{itemize}
+  \vspace{0.6em}
+  \textit{We move from first principles to deployable stochastic simulations in eight sessions.}
+\end{frame}
+
 \begin{frame}{Framing the Gap}
   \begin{itemize}
     \item Most data science programs focus on regression, classification, and ML.
@@ -79,6 +91,18 @@
       \textit{Used by companies to staff efficiently and reduce wait times.}
     \end{column}
   \end{columns}
+\end{frame}
+
+\begin{frame}{What Stakeholders Care About}
+  \begin{itemize}
+    \item \textbf{Reliability}: likelihood the system breaches SLA thresholds.
+    \item \textbf{Efficiency}: server utilisation vs. customer experience.
+    \item \textbf{Elasticity}: ability to scale up/down during seasonal peaks.
+    \item \textbf{Fairness}: which users incur delays; equity across customer classes.
+    \item \textbf{Resilience}: recovery profile after incidents or spikes.
+  \end{itemize}
+  \vspace{0.6em}
+  \textit{Queueing metrics translate these business objectives into measurable random variables.}
 \end{frame}
 
 \begin{frame}{Use Case: Hospitals}
@@ -139,6 +163,18 @@
   \end{columns}
 \end{frame}
 
+\begin{frame}{Modeling Workflow}
+  \begin{enumerate}
+    \item \textbf{Observe}: collect arrival/service traces, understand constraints.
+    \item \textbf{Idealise}: pick parsimonious assumptions (Poisson arrivals, exponential service, finite buffers).
+    \item \textbf{Analyse}: derive quick estimates (Little's Law, stability bounds).
+    \item \textbf{Simulate}: stress-test policy choices, explore what-if scenarios.
+    \item \textbf{Validate}: compare with real data, refine assumptions, communicate insights.
+  \end{enumerate}
+  \vspace{0.4em}
+  \textit{Each lecture revisits this loop with richer building blocks.}
+\end{frame}
+
 \begin{frame}{Why Simulate?}
   \begin{itemize}
     \item Closed-form expressions are rare or complicated.
@@ -177,6 +213,29 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Estimating $\lambda$ in Practice}
+  \begin{enumerate}
+    \item Choose a consistent window (per minute/hour, per location, per channel).
+    \item Compute $\hat{\lambda} = \tfrac{1}{n}\sum X_i$ from historical counts.
+    \item Use variance check: Poisson assumption suggests sample variance $\approx \hat{\lambda}$.
+    \item Incorporate seasonality via piecewise constant or spline-based rates.
+    \item Apply shrinkage/Empirical Bayes for low-volume segments.
+  \end{enumerate}
+  \vspace{0.4em}
+  \textit{These diagnostics appear in the notebook; bring your data to test them.}
+\end{frame}
+
+\begin{frame}{Recognising Poisson Limitations}
+  \begin{itemize}
+    \item \textbf{Overdispersion}: variance $\gg$ mean signals bursty or correlated arrivals.
+    \item \textbf{Time-of-day effects}: use non-homogeneous Poisson or piecewise rates.
+    \item \textbf{Feedback loops}: arrivals depend on system state (e.g., re-tries) $\Rightarrow$ need queueing networks.
+    \item \textbf{Heavy tails}: inter-arrival distributions with long memory require renewal/ARIMA/Hawkes models.
+  \end{itemize}
+  \vspace{0.4em}
+  \textit{Flag these patterns early to avoid mis-specified simulations.}
+\end{frame}
+
 \begin{frame}{From Counts to Arrival Times}
   \begin{itemize}
     \item If counts per interval follow $\mathrm{Poi}(\lambda)$, inter-arrival times are $\mathrm{Exp}(\lambda)$.
@@ -188,9 +247,9 @@
 
 \begin{frame}{Poisson in Simulation}
   \begin{itemize}
-    \item Python: `numpy.random.poisson(lam, size)` samples counts directly.
+    \item Python: \texttt{numpy.random.poisson(lam, size)} samples counts directly.
     \item For arrival times, sample exponentials: \texttt{np.random.exponential(1/lambda\_rate)}.
-    \item In SimPy, schedule arrivals via `env.timeout(...)` using exponential draws.
+    \item In SimPy, schedule arrivals via \texttt{env.timeout(...)} using exponential draws.
     \item Validate simulated averages and variances against $\lambda$.
   \end{itemize}
 \end{frame}
@@ -200,8 +259,7 @@
     \item Help desk receives on average $\lambda = 4$ tickets per hour.
     \item For a 30 minute window: $\lambda_{0.5h} = 4 \times 0.5 = 2$.
     \item Probability of at least one ticket: $1 - e^{-2} \approx 0.865$.
-    \item Exact prob. of zero tickets in that window: $e^{-2} \approx 0.135$.
-    \item Quick sanity check: expected tickets in 30 min is also $2$.
+    \item Probability of zero tickets in that window: $e^{-2} \approx 0.135$.
   \end{itemize}
 \end{frame}
 
@@ -217,7 +275,9 @@
 
 \begin{frame}{Exercise: Plain Python Warm-Up}
   \begin{enumerate}
-    \item Import \texttt{numpy as np}; set \texttt{rng = np.random.default\_rng(42)}.
+    \item Import \texttt{numpy as np}; 
+    
+    set \texttt{rng = np.random.default\_rng(42)}.
     \item Let \texttt{lam = 4} per hour; compute \texttt{lambda\_window = lam * 0.5}.
     \item Simulate \texttt{n\_windows = 1000} half-hour counts via \texttt{rng.poisson(lam=lambda\_window, size=n\_windows)}.
     \item Report sample mean/variance and compare to the theoretical value $\lambda = 2$.
