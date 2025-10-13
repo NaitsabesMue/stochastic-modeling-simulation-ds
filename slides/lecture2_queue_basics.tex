@@ -1,0 +1,255 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{AMU}
+\usepackage{amsmath, amssymb}
+\usepackage{tikz}
+\usepackage{booktabs}
+
+\title[Queueing Models]{Stochastic Models and Simulation: Queueing Foundations}
+\subtitle{Lecture 2 \textendash{} Birth--Death Models, M/M queues, and Beyond}
+\author{Sebastian Müller}
+\date{Lecture 2}
+
+\newcommand{\definitionblock}[1]{\begin{block}{Definition}#1\end{block}}
+\newcommand{\theorembox}[1]{\begin{block}{Theorem}#1\end{block}}
+
+\begin{document}
+
+\section{Motivation}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+
+
+\begin{frame}{From Poisson Counts to Queues}
+  \begin{itemize}
+    \item Lecture 1: Poisson counts, thinning, simulation boilerplate.
+    \item Today: turn arrival counts into full service systems.
+    \item Core questions:
+    \begin{itemize}
+      \item How do waiting times/queue lengths arise from stochastic primitives?
+      \item What closed-form results exist for Markovian queues?
+      \item How do we simulate when formulas are unavailable?
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{Queueing Theory Basics}
+
+\begin{frame}{Building Blocks}
+  \definitionblock{A queueing system is described by arrivals, service mechanism, number of servers, capacity, and service discipline.}
+  \begin{itemize}
+    \item Kendall notation $A/S/c/K/m/Z$ with defaults $\infty$ capacity, infinite population, FIFO.
+    \item States often captured by customer count $N(t)$.
+    \item Stability requires arrival rate $\lambda$ smaller than total service capacity.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Little's Law}
+  \theorembox{$L = \lambda W$, holds for any stable queue in steady state.}
+  \begin{itemize}
+    \item $L$: expected number in system, $\lambda$: effective arrival rate, $W$: expected sojourn time.
+    \item Corollaries: $L_q = \lambda W_q$, throughput equals arrival rate when stable.
+    \item Applies to simulations: we validate estimates by cross-checking Little's identities.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Birth--Death Chains}
+  \begin{itemize}
+    \item Many queues map to continuous-time Markov chains with transitions $n \to n+1$ (birth with rate $\lambda_n$) and $n \to n-1$ (death with rate $\mu_n$).
+    \item Balance equations yield stationary probabilities $\pi_n$ when $\sum_n \pi_n = 1$.
+    \item For homogeneous rates: $\pi_n = \pi_0 \prod_{k=1}^n \frac{\lambda_{k-1}}{\mu_k}$.
+    \item Convergence criterion: $\limsup_{n \to \infty} \prod_{k=1}^n \lambda_{k-1}/\mu_k < 1$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Interpreting State Probabilities}
+  \begin{itemize}
+    \item $\pi_n$ answers: fraction of time system holds $n$ customers, or probability an arriving job sees $n$ in steady state (PASTA).
+    \item Performance measures as expectations: $L = \sum n \pi_n$, blocking probability $= \pi_K$ for finite-capacity queues.
+    \item Insight: small changes in utilisation can dramatically shift mass toward high $n$ when $\rho$ close to 1.
+  \end{itemize}
+\end{frame}
+
+\section{Classic Markovian Queues}
+
+\begin{frame}{M/M/1 Recap}
+  \begin{itemize}
+    \item Arrival rate $\lambda$, single server with rate $\mu$.
+    \item Stability: $\rho = \lambda/\mu < 1$.
+    \item Performance:
+      \begin{align*}
+        L &= \frac{\rho}{1-\rho}, & L_q &= \frac{\rho^2}{1-\rho}, \\
+        W &= \frac{1}{\mu-\lambda}, & W_q &= \frac{\rho}{\mu-\lambda}.
+      \end{align*}
+    \item Queue-length distribution: geometric $\mathbb{P}[N=n] = (1-\rho)\rho^n$.
+    \item Time in system: exponential with mean $1/(\mu-\lambda)$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{M/M/1 Intuition}
+  \begin{itemize}
+    \item $\rho$ is utilisation: proportion of time server is busy.
+    \item As $\rho \uparrow 1$, mean wait grows like $\frac{1}{1-\rho}$: diminishing returns of adding load.
+    \item Memoryless service $\Rightarrow$ past does not inform remaining service time (strong assumption!).
+    \item Sensitivity analysis: 10\% error in $\rho$ translates to large swings in $W_q$ when near saturation.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{M/M/c with Infinite Buffer}
+  \begin{itemize}
+    \item Model: M/M/$c$, or Erlang-C. $c$ parallel servers, Poisson arrivals $\lambda$, exponential service $\mu$.
+    \item Offered load and utilisation: \; $\rho = \lambda/(c\mu)$; stability requires $\rho < 1$.
+    \item Birth--death structure: $\lambda_n = \lambda$, \; $\mu_n = \min(n,c)\,\mu$. 
+    \item Erlang-C waiting probability (with $a = \lambda/\mu = c\rho$):
+      \[
+        P_{\text{wait}} := C(c,\lambda/\mu):= \frac{\dfrac{(c\rho)^c}{c!}\,\dfrac{1}{1-\rho}}{\displaystyle\sum_{k=0}^{c-1} \frac{(c\rho)^k}{k!} + \dfrac{(c\rho)^c}{c!}\,\dfrac{1}{1-\rho}}.
+      \]
+      Probability that arrival is forced to join the queue. 
+    \item Performance via Little's Law: $L_q = P_{\text{wait}}\,\dfrac{\rho}{1-\rho}$, \; $W_q = L_q/\lambda$, \; $W = W_q + 1/\mu$, \; $L = \lambda W$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{M/M/c Intuition}
+  \begin{itemize}
+    \item Adding servers reduces wait times dramatically when $\rho$ close to 1.
+    \item Diminishing returns: each additional server helps less than the previous one.
+    \item Key design question: balance cost of servers vs. cost of customer waiting.
+    \item Example: call centers, cloud computing, hospital wards.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{M/M/c/K and Blocking}
+  \begin{itemize}
+    \item Finite capacity $K$: arrivals finding system full are lost.
+    \item The M/M/c/c is known as Erlang-B model. No queueing, just blocking.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{M/M/c/K Details}
+  \begin{itemize}
+    \item Let offered load $a = \lambda/\mu$ and $\rho = a/c$. Stationary probabilities:
+      
+      $\displaystyle \pi_n = \pi_0
+      \begin{cases}
+        \dfrac{a^n}{n!}, & 0 \le n \le c, \\[0.25em]
+        \dfrac{a^n}{c!\, c^{\,n-c}}, & c \le n \le K,
+      \end{cases}$
+      with
+      $\displaystyle \pi_0^{-1} = \sum_{n=0}^{c-1} \frac{a^n}{n!} + \frac{a^c}{c!}\,\frac{1-\rho^{\,K-c+1}}{1-\rho}$.
+    \item Blocking probability: $\pi_K = \dfrac{a^c}{c!}\,\pi_0\,\rho^{\,K-c}$. Accepted arrival rate: $\lambda_a = \lambda \pi_K$.
+    \item Exact mean times and counts:
+      \[
+        W_q = \frac{\pi_0\,\rho\,(c\rho)^c}{\lambda\,(1-\rho)^2\,c!},\qquad
+        W = W_q + \frac{1}{\mu}.
+      \]
+      \[
+        L_q = \lambda_a\,W_q,\qquad
+        L = \lambda_a\,W = \frac{\lambda_a}{\mu} + L_q.
+      \]
+      \end{itemize}
+\end{frame}
+
+\begin{frame}{Case Study: ICU Triage}
+  \begin{itemize}
+    \item Beds correspond to servers; rooms limited $\Rightarrow$ M/M/1/K (or M/M/c/K).
+    \item Key decisions: number of surge beds, transfer policies, triage thresholds.
+    \item Blocking corresponds to diverting patients; quantify expected diversions per day.
+    \item Simulations incorporate surge arrivals, length-of-stay variance, priority rules.
+  \end{itemize}
+  \vspace{0.4em}
+  \textit{Combining theory + simulation informs contingency planning with quantitative evidence.}
+\end{frame}
+
+
+\section{Simulation Strategies}
+
+
+\begin{frame}{Simulation Outputs to Track}
+  \begin{itemize}
+    \item Time series: queue length $N(t)$, utilisation, waiting time trajectories.
+    \item Distributional summaries: histograms, quantiles, tail probabilities.
+    \item Diagnostics: Little's Law gaps, autocorrelation, warm-up bias detection.
+    \item Sensitivity: rerun with perturbed $\lambda,\mu$ to gauge robustness.
+  \end{itemize}
+  \vspace{0.4em}
+  \textit{Use these views to communicate findings to non-technical stakeholders.}
+\end{frame}
+
+\section{Beyond Markovian Service}
+
+\begin{frame}{When Exponentials Fail}
+  \begin{itemize}
+    \item Real systems often exhibit general service times or bursty arrivals.
+    \item Example: M/G/1 (Poisson arrivals, general service); closed-form results via Pollaczek--Khinchine formula.
+    \item G/G/1: few general formulas; rely on approximations and simulation.
+    \item Renewal theory helps when inter-arrivals have finite mean; some heavy-tail cases have infinite variance.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Why Non-Markov Models Matter}
+  \begin{itemize}
+    \item Customer patience distribution drives abandonment behaviour (call centers, web services).
+    \item Service-time variance dominates mean wait (cloud functions, healthcare lengths of stay).
+    \item Regulatory/compliance constraints require tail guarantees, not just averages.
+    \item Simulation allows scenario testing when analytic formulas break down.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Markov-Modulated Poisson Processes (MMPP)}
+  \begin{itemize}
+    \item Arrival rate driven by a background CTMC with states $1,\dots,m$ and generator $Q$.
+    \item In state $i$, arrivals follow a Poisson process with intensity $\lambda_i$.
+    \item Captures burstiness/seasonality while retaining tractable structure (phase-type arrivals, matrix-analytic methods).
+    \end{itemize}
+  \vspace{0.4em}
+  \textit{Useful for modelling traffic with bursts, e.g., telecom networks or demand spikes in e-commerce.}
+\end{frame}
+
+\begin{frame}{Pollaczek--Khinchine Snapshot}
+  \begin{itemize}
+    \item For M/G/1 with service time $S$ (mean $\mathbb{E}[S]$, variance $\mathrm{Var}(S)$):
+    \[
+      W_q = \frac{\lambda \mathbb{E}[S^2]}{2(1-\rho)}, \quad W = W_q + \mathbb{E}[S].
+    \]
+    \item Reveals sensitivity to service variance; heavy-tailed $S$ inflates $W_q$ massively.
+    \item Distributional results harder; simulation gives empirical quantiles/tails.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Example: Lognormal Service}
+  \begin{itemize}
+    \item Same mean service as exponential, but lognormal with $\sigma=0.6$ doubles $\mathbb{E}[S^2]$.
+    \item Pollaczek--Khinchine predicts $W_q$ nearly doubles: variability is as important as mean.
+    \item Notebook visualises histograms, time-averages, and tail probabilities for exponential vs. lognormal.
+    \item Use quantitative bounds (CLT/Bernstein) to report uncertainty in estimated averages.
+  \end{itemize}
+\end{frame}
+
+\section{Preview of Notebook}
+
+\begin{frame}{Hands-On: Comparing Models}
+  The accompanying notebook features:
+  \begin{enumerate}
+    \item Plain-Python and SimPy M/M/1 and M/M/c simulations with validation against theory.
+    \item Non-Markov queue example (M/G/1 with lognormal service) including:
+      \begin{itemize}
+        \item Empirical waiting-time histograms vs. Pollaczek--Khinchine predictions.
+        \item Confidence intervals / concentration bounds for estimated means.
+        \item Visual comparisons of exponential vs. heavy-tail behaviour.
+      \end{itemize}
+    \item Template for students to extend to G/G/1.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Takeaways}
+  \begin{itemize}
+    \item Birth--death models yield closed forms for many performance metrics.
+    \item Simulations complement theory: diagnostics, sanity checks, non-Markov cases.
+    \item Next lecture: renewal theory and regenerative processes for general systems.
+  \end{itemize}
+\end{frame}
+
+\end{document}
