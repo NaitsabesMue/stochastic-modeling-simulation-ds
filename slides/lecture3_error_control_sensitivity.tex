@@ -1,0 +1,135 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{AMU}
+\usepackage{amsmath, amssymb}
+\usepackage{bm}
+\usepackage{booktabs}
+
+\title[Error + Sensitivity]{Stochastic Simulation: Error Control and Sensitivity}
+\subtitle{Lecture 3 \textendash{} Concentration, CLT, Variance Reduction, and Error Propagation}
+\author{Sebastian Müller}
+\date{Lecture 3}
+
+\newcommand{\definitionblock}[1]{\begin{block}{Definition}#1\end{block}}
+\newcommand{\theorembox}[1]{\begin{block}{Theorem}#1\end{block}}
+\newcommand{\notebox}[1]{\begin{block}{Note}#1\end{block}}
+
+\begin{document}
+
+\section{Motivation}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Why Error Control Matters}
+  \begin{itemize}
+    \item Quantify uncertainty of simulation outputs (means, tails, quantiles).
+    \item Plan sample sizes to meet accuracy targets (half-width, confidence).
+    \item Reduce Monte Carlo noise per unit cost (variance reduction).
+    \item Propagate estimation error of inputs (e.g., $\lambda,\mu$) to outputs.
+  \end{itemize}
+\end{frame}
+
+\section{Concentration Inequalities}
+
+\begin{frame}{Markov and Chebyshev}
+  \theorembox{Markov (for nonnegative $X$): $\;\mathbb P(X\ge t)\le \dfrac{\mathbb E[X]}{t}$.}
+  \theorembox{Chebyshev (finite variance): $\;\mathbb P\big(|X-\mathbb E[X]|\ge\varepsilon\big)\le\dfrac{\operatorname{Var}(X)}{\varepsilon^2}$.}
+  \begin{itemize}
+    \item Valid for any $n$; conservative but assumption-light.
+    \item For sample mean $\bar X_n$: $\; \mathbb P\big(|\bar X_n-\mu|\ge\varepsilon\big)\le \dfrac{\sigma^2}{n\,\varepsilon^2}$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Bernstein: Bounded and Unbounded}
+  \theorembox{Bounded case ($|X_i-\mu|\le b$ i.i.d., variance $\sigma^2$):
+  \[
+    \mathbb P\big(|\bar X_n-\mu|\ge\varepsilon\big) \le 2\,\exp\!\Bigg( -\,\frac{n\,\varepsilon^2}{2\sigma^2 + (2/3)\,b\,\varepsilon}\Bigg).
+  \]}
+  \theorembox{Unbounded (sub-exponential; MGF bound): if $\mathbb E\,e^{\lambda(X_i-\mu)}\le \exp(\lambda^2\nu^2/2)$ for $|\lambda|<1/b$, then
+  \[
+    \mathbb P\big(|\bar X_n-\mu|\ge\varepsilon\big) \le 2\,\exp\!\Big( -\tfrac{n}{2}\,\min\{\varepsilon^2/\nu^2,\,\varepsilon/b\}\Big).
+  \]}
+  \end{frame}
+
+
+\section{CLT and Planning}
+
+\begin{frame}{CLT and Confidence Intervals}
+  \theorembox{CLT: $\displaystyle \frac{\sqrt{n}(\bar X-\mu)}{\sigma} \Rightarrow \mathcal N(0,1)$.}
+  \begin{itemize}
+    \item CI (known $\sigma$): $\; \bar X \pm z_{1-\alpha/2}\,\dfrac{\sigma}{\sqrt{n}}$.\;
+          Unknown $\sigma$: replace by $s$; use $t_{n-1}$ for finite $n$.
+    \item Target half-width $\varepsilon$: $\; n\ge\left(\dfrac{z_{1-\alpha/2}\,\sigma}{\varepsilon}\right)^2$. Relative error: $\; n\ge\left(\dfrac{z\,\sigma}{r|\mu|}\right)^2$.
+    \item Sequential stopping: continue until $\; s\,z/\sqrt{n}\le\varepsilon$ (with max $n$).
+  \end{itemize}
+  \notebox{Berry--Esseen: $\sup_x\big|\mathbb P(\sqrt{n}(\bar X-\mu)/\sigma\le x)-\Phi(x)\big|\le C\,\rho_3/(\sigma^3\sqrt{n})$, $C\approx0.56$.}
+\end{frame}
+
+\begin{frame}{Choosing Between CLT and Concentration}
+  \begin{itemize}
+    \item CLT-based CIs: tighter but asymptotic; validate via pilot runs or Berry--Esseen.
+    \item Concentration (Chebyshev/Bernstein): non-asymptotic guarantees; may be conservative.
+    \item Practice: start with pilot, use CLT for sizing; report conservative bounds alongside.
+  \end{itemize}
+\end{frame}
+
+\section{Examples}
+
+\begin{frame}{Exponential Example: Tails and Means}
+  \begin{itemize}
+    \item $X\sim\mathrm{Exp}(\lambda)$: compare empirical tail $\mathbb P(X\ge t)$ vs. Markov bound $\mathbb E[X]/t$.
+    \item For sample mean $\bar X_n$: compare empirical $\mathbb P(|\bar X_n-1/\lambda|\ge\varepsilon)$ to Chebyshev and sub-exp Bernstein.
+    \item See notebook for code and plots.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{3-State Markov Chain: Convergence}
+  \definitionblock{Irreducible, aperiodic chain with transition matrix $P$ has a unique stationary distribution $\pi$ with $\pi^\top P=\pi^\top$.}
+  \begin{itemize}
+    \item Simulate trajectory and track $\|\hat\pi_T-\pi\|_1$ vs $T$.
+    \item Use warm-up: discard initial transient before estimating steady-state measures.
+  \end{itemize}
+\end{frame}
+
+\section{Variance Reduction}
+
+\begin{frame}{Antithetic Variates}
+  \definitionblock{Use negatively correlated pairs $(U,1-U)$ for $U\sim\mathrm{Unif}(0,1)$ and average estimates.}
+  \begin{itemize}
+    \item Example integral $I=\int_0^1 e^{-x}dx$: estimator $\tfrac12\big(e^{-U}+e^{-(1-U)}\big)$ lowers variance.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Control Variates}
+  \definitionblock{With control $g$ s.t. $\mathbb E[g]=\gamma$ known, use $\; \hat I_{cv}=\bar f - \beta(\bar g-\gamma)$ with $\beta^*=\operatorname{Cov}(f,g)/\operatorname{Var}(g)$.}
+  \begin{itemize}
+    \item For $f(U)=e^{-U}$, take $g(U)=U$, $\gamma=1/2$. Estimate $\beta$ from pilot samples.
+    \item Report variance ratios vs. naive; verify unbiasedness.
+  \end{itemize}
+\end{frame}
+
+\section{Error Propagation (M/M/1)}
+
+\begin{frame}{Sensitivity Near Criticality}
+  \begin{itemize}
+    \item $L=\dfrac{\rho}{1-\rho}$ with $\rho=\lambda/\mu$; derivatives blow up as $\rho\to1$.
+    \item Example: $\; \partial L/\partial\lambda = \dfrac{1}{\mu(1-\rho)^2}$, large for high utilisation.
+    \item Implication: small estimation errors create large performance swings; report intervals, not points.
+  \end{itemize}
+\end{frame}
+
+\section{Practice}
+
+\begin{frame}{Practical Checklist}
+  \begin{itemize}
+    \item State assumptions (IID? bounded? sub-exponential? mixing?).
+    \item Use pilot runs for $s$ and other paramters; plan $n$ via CLT; report conservative Bernstein bounds.
+    \item Validate: CI coverage via repeated runs; inspect warm-up, autocorrelation.
+    \item Prefer variance reduction; reuse RNG seeds for fair comparisons.
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
