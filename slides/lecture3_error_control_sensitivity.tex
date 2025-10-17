@@ -13,6 +13,7 @@
 \newcommand{\definitionblock}[1]{\begin{block}{Definition}#1\end{block}}
 \newcommand{\theorembox}[1]{\begin{block}{Theorem}#1\end{block}}
 \newcommand{\notebox}[1]{\begin{block}{Note}#1\end{block}}
+\newcommand{\ideabox}[1]{\begin{block}{Idea}#1\end{block}}
 
 \begin{document}
 
@@ -86,7 +87,7 @@
 \end{frame}
 
 \begin{frame}{3-State Markov Chain: Convergence}
-  \definitionblock{Irreducible, aperiodic chain with transition matrix $P$ has a unique stationary distribution $\pi$ with $\pi^\top P=\pi^\top$.}
+  \theorembox{Irreducible, aperiodic chain with transition matrix $P$ has a unique stationary distribution $\pi$ with $\pi^\top P=\pi^\top$.}
   \begin{itemize}
     \item Simulate trajectory and track $\|\hat\pi_T-\pi\|_1$ vs $T$.
     \item Use warm-up: discard initial transient before estimating steady-state measures.
@@ -96,14 +97,14 @@
 \section{Variance Reduction}
 
 \begin{frame}{Antithetic Variates}
-  \definitionblock{Use negatively correlated pairs $(U,1-U)$ for $U\sim\mathrm{Unif}(0,1)$ and average estimates.}
+ \ideabox{Use negatively correlated pairs $(U,1-U)$ for $U\sim\mathrm{Unif}(0,1)$ and average estimates.}
   \begin{itemize}
     \item Example integral $I=\int_0^1 e^{-x}dx$: estimator $\tfrac12\big(e^{-U}+e^{-(1-U)}\big)$ lowers variance.
   \end{itemize}
 \end{frame}
 
 \begin{frame}{Control Variates}
-  \definitionblock{With control $g$ s.t. $\mathbb E[g]=\gamma$ known, use $\; \hat I_{cv}=\bar f - \beta(\bar g-\gamma)$ with $\beta^*=\operatorname{Cov}(f,g)/\operatorname{Var}(g)$.}
+  \ideabox{With control $g$ s.t. $\mathbb E[g]=\gamma$ known, use $\; \hat I_{cv}=\bar f - \beta(\bar g-\gamma)$ with $\beta^*=\operatorname{Cov}(f,g)/\operatorname{Var}(g)$.}
   \begin{itemize}
     \item For $f(U)=e^{-U}$, take $g(U)=U$, $\gamma=1/2$. Estimate $\beta$ from pilot samples.
     \item Report variance ratios vs. naive; verify unbiasedness.
@@ -115,7 +116,7 @@
 \begin{frame}{Sensitivity Near Criticality}
   \begin{itemize}
     \item $L=\dfrac{\rho}{1-\rho}$ with $\rho=\lambda/\mu$; derivatives blow up as $\rho\to1$.
-    \item Example: $\; \partial L/\partial\lambda = \dfrac{1}{\mu(1-\rho)^2}$, large for high utilisation.
+    \item Example: $\; \partial L/\partial\lambda = \dfrac{1}{\mu(1-\lambda/\mu)^2}$, large for high utilisation.
     \item Implication: small estimation errors create large performance swings; report intervals, not points.
   \end{itemize}
 \end{frame}
