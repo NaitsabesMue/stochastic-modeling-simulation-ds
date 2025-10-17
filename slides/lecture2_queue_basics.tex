@@ -198,15 +198,6 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Markov-Modulated Poisson Processes (MMPP)}
-  \begin{itemize}
-    \item Arrival rate driven by a background CTMC with states $1,\dots,m$ and generator $Q$.
-    \item In state $i$, arrivals follow a Poisson process with intensity $\lambda_i$.
-    \item Captures burstiness/seasonality while retaining tractable structure (phase-type arrivals, matrix-analytic methods).
-    \end{itemize}
-  \vspace{0.4em}
-  \textit{Useful for modelling traffic with bursts, e.g., telecom networks or demand spikes in e-commerce.}
-\end{frame}
 
 \begin{frame}{Pollaczek--Khinchine Snapshot}
   \begin{itemize}
@@ -226,6 +217,16 @@
     \item Notebook visualises histograms, time-averages, and tail probabilities for exponential vs. lognormal.
     \item Use quantitative bounds (CLT/Bernstein) to report uncertainty in estimated averages.
   \end{itemize}
+\end{frame}
+
+\begin{frame}{Markov-Modulated Poisson Processes (MMPP)}
+  \begin{itemize}
+    \item Arrival rate driven by a background CTMC with states $1,\dots,m$ and generator $Q$.
+    \item In state $i$, arrivals follow a Poisson process with intensity $\lambda_i$.
+    \item Captures burstiness/seasonality while retaining tractable structure (phase-type arrivals, matrix-analytic methods).
+    \end{itemize}
+  \vspace{0.4em}
+  \textit{Useful for modelling traffic with bursts, e.g., telecom networks or demand spikes in e-commerce.}
 \end{frame}
 
 \section{Preview of Notebook}
