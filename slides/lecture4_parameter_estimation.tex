@@ -1,0 +1,631 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{AMU}
+\usepackage{amsmath, amssymb}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\usepackage{bm}
+\usepackage{booktabs}
+
+\title[Parameter Estimation]{Stochastic Models: Parameter Estimation}
+\subtitle{Lecture 4 \textendash{} Estimation for Poisson, M/M/1, and M/G/1}
+\author{Sebastian Müller}
+\date{Lecture 4}
+
+\newcommand{\definitionblock}[1]{\begin{block}{Definition}#1\end{block}}
+\newcommand{\theorembox}[1]{\begin{block}{Theorem}#1\end{block}}
+\newcommand{\notebox}[1]{\begin{block}{Note}#1\end{block}}
+\newcommand{\ideabox}[1]{\begin{block}{Idea}#1\end{block}}
+
+\begin{document}
+
+\section{Overview}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{What We Cover Today}
+  \begin{itemize}
+    \item Poisson process: likelihood with right-censoring, rate MLE, Fisher information, asymptotic CI.
+    \item M/M/1: estimating $\lambda$ and $\mu$ under common observation schemes; plug-in performance.
+    \item M/G/1: estimating $\lambda$ and service moments; Pollaczek--Khinchine plug-in; uncertainty.
+    \item Practical issues: sufficiency, censoring at the observation horizon, near-critical sensitivity.
+  \end{itemize}
+\end{frame}
+
+\section{Poisson Rate Estimation}
+
+\begin{frame}{Setup and Inter-arrival Times}
+Consider a homogeneous Poisson process of rate $\lambda>0$ observed on $[0,T]$. Let $N(T)$ be the number of events by time $T$, with event times $0<t_1<\cdots<t_{N(T)}\le T$.
+\smallskip
+
+Define inter-arrivals:
+\[ T_1=t_1,\qquad T_i=t_i-t_{i-1},\; i=2,\dots,n. \]
+
+The last interval is right-censored at $T$:
+\[ T_{n+1}> T-t_n. \]
+
+For $i=1,\dots,n$, $T_i\sim \mathrm{Exp}(\lambda)$ with density $f(T_i\mid\lambda)=\lambda e^{-\lambda T_i}$.
+The censored contribution is $\mathbb P(T_{n+1}>T-t_n\mid\lambda)=e^{-\lambda(T-t_n)}$.
+\end{frame}
+
+\begin{frame}{Likelihood and Sufficiency}
+The likelihood is
+\[
+L(\lambda\mid\text{data}) = \prod_{i=1}^n \big(\lambda e^{-\lambda T_i}\big)\cdot e^{-\lambda(T-t_n)}
+= \lambda^n e^{-\lambda t_n}\, e^{-\lambda(T-t_n)}.
+\]
+We get the simplified likelihood
+\[ L(\lambda\mid n,T) = \lambda^n e^{-\lambda T}. \]
+
+\notebox{The likelihood depends only on $(n,T)$, not on the exact event times $t_i$: $N(T)$ is a sufficient statistic for $\lambda$.}
+\end{frame}
+
+\begin{frame}{MLE and Properties}
+Log-likelihood: $\; \ell(\lambda)= n\log\lambda - \lambda T$ (concave for $\lambda>0$).
+\[ \frac{\partial\ell}{\partial\lambda}=\frac{n}{\lambda}-T=0 \;\Rightarrow\; \hat\lambda = \frac{n}{T}=\frac{N(T)}{T}. \]
+\begin{itemize}
+  \item Unbiased: $\; \mathbb E[\hat\lambda]=\lambda$.
+  \item Efficient: attains Cramér--Rao; no unbiased estimator has smaller variance.
+  \item Consistent: $\hat\lambda \xrightarrow{p} \lambda$ as $T\to\infty$.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Fisher Information and CI}
+Score: $S(\lambda)=\partial\ell/\partial\lambda = n/\lambda - T$.\; Hessian: $H(\lambda)=-n/\lambda^2$.
+\[ I(\lambda) = -\mathbb E\big[H(\lambda)\big] = \frac{\mathbb E[n]}{\lambda^2}=\frac{\lambda T}{\lambda^2}=\frac{T}{\lambda}. \]
+Cramér--Rao: $\operatorname{Var}(\hat\lambda)\ge 1/I(\lambda)=\lambda/T$. In fact,
+\[ \operatorname{Var}\!\left(\tfrac{N(T)}{T}\right)=\frac{\lambda}{T}. \]
+Asymptotic normality: $\sqrt{T}(\hat\lambda-\lambda)\Rightarrow\mathcal N(0,\lambda)$.\; 95\% CI:
+\[ \hat\lambda \;\pm\; 1.96\,\sqrt{\tfrac{\hat\lambda}{T}}. \]
+\end{frame}
+
+\begin{frame}{Why Event Times Drop Out}
+\begin{itemize}
+  \item $N(T)$ is sufficient (factorization theorem).
+  \item Conditionally on $N(T)=n$, the order statistics $t_1,\dots,t_n$ are those of i.i.d. $\mathrm{Unif}(0,T)$ draws.
+  \item Their joint density is $\tfrac{n!}{T^n}$, independent of $\lambda$, and cancels in the likelihood.
+\end{itemize}
+\end{frame}
+
+\section{Estimating M/M/1}
+
+\begin{frame}{Estimating M/M/1 Parameters}
+Goal: estimate arrival rate $\lambda$ and service rate $\mu$ from observations of an M/M/1 queue over $[0,T]$.
+\vspace{0.5em}
+\begin{block}{A) Interarrival \& service times observed}
+\begin{itemize}
+    \item $A_1, \dots, A_{n_A} \stackrel{\text{iid}}{\sim} \mathrm{Exp}(\lambda)$ \quad (interarrivals)
+    \item $S_1, \dots, S_{n_S} \stackrel{\text{iid}}{\sim} \mathrm{Exp}(\mu)$ \quad (service times)
+\end{itemize}
+\[
+\boxed{\hat{\lambda} = \frac{n_A}{\sum A_i}, \quad \hat{\mu} = \frac{n_S}{\sum S_i}}
+\]
+MLEs from independent exponential samples.
+\end{block}
+\end{frame}
+
+\begin{frame}{Estimating M/M/1 Parameters}
+\begin{block}{B) Calendar-time observation on $[0,T]$}
+\begin{itemize}
+    \item $N_A(T)$: number of arrivals
+    \item $C(T)$: number of completions
+    \item $B(T) = \int_0^T \mathbf{1}\{Q(t) \geq 1\}\,dt$: \emph{total busy time}
+\end{itemize}
+\[
+\boxed{\hat{\lambda} = \frac{N_A(T)}{T}, \quad \hat{\mu} = \frac{C(T)}{B(T)}}
+\]
+\end{block}
+\notebox{
+In B), during busy periods, completions form a Poisson process of rate $\mu$.  
+Thus, $C(T) \sim \mathrm{Poisson}(\mu B(T)) \implies \hat{\mu} = C(T)/B(T)$ is the MLE.
+}
+\end{frame}
+
+\begin{frame}{Estimating M/M/1 Parameters}
+\begin{block}{C) Only queue length process $Q(t)$ observed}
+\begin{itemize}
+    \item Full trajectory or event times $\to$ CTMC birth-death inference
+    \item Contains all info from B (and more) — sufficient for MLE + model validation
+\end{itemize}
+\[
+\boxed{\hat{\lambda} = \frac{\text{up transitions}}{T}, \hat{\mu} = \frac{\text{down transitions}}{\text{total busy time}}}
+\]
+\end{block}
+\notebox{CTMC likelihood needed to prove that they are MLE, efficient, and optimal. }
+\end{frame}
+
+
+\begin{frame}{M/M/1 Estimation: Observation Types — Full Comparison}
+\tiny
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Aspect} & 
+\textbf{A: $A_i + S_i$ (paired)} & 
+\textbf{B: Aggregates} & 
+\textbf{C: $Q(t)$ trajectory} \\
+\hline
+\textbf{Data observed} & 
+Interarrivals $A_i$, service times $S_i$ & 
+$N_A(T)$, $C(T)$, $B(T)$ & 
+Full $Q(t)$  \\
+\hline
+\textbf{Can reconstruct $Q(t)$?} & 
+\emph{Yes} (FIFO + pairing) & 
+\emph{No} & 
+\emph{Yes} (given) \\
+\hline
+\textbf{Data volume \& storage} & 
+High (per event) & 
+\emph{Low} (3 numbers) & 
+High (per-event) \\
+\hline
+\textbf{Privacy risk} & 
+High & 
+\emph{Low} & 
+High \\
+\hline
+\textbf{Real-world availability} & 
+\emph{Rare} & 
+\emph{Common} & 
+Rare \\
+\hline
+\textbf{MLE $(\hat{\lambda}, \hat{\mu})$?} & 
+Yes & 
+Yes & 
+Yes \\
+\hline
+\textbf{Validate Exp. interarrivals?} & 
+Yes & 
+Yes (via $N_A(T)$) & 
+Yes \\
+\hline
+\textbf{Validate Exp. services in context?} & 
+\emph{Yes} (via reconstructed $Q(t)$) & 
+\emph{No} & 
+\emph{Yes} \\
+\hline
+\textbf{Test non-Markovianity?} & 
+\emph{Yes} (via $Q(t)$) & 
+\emph{No} & 
+\emph{Yes} \\
+\hline
+\textbf{Estimate $\rho = \lambda/\mu$?} & 
+Yes & 
+Yes & 
+Yes \\
+\hline
+\textbf{Statistical power (theory)} & 
+\emph{Highest} & 
+Sufficient & 
+\emph{Highest} \\
+\hline
+\textbf{Practical utility} & 
+\emph{Low} & 
+\emph{High} & 
+Medium \\
+\hline
+\end{tabular}
+\end{center}
+\footnotesize
+\notebox{
+\textbf{B is the practical winner}: minimal data, full MLE, widely available.  
+\textbf{A and C are theoretically strongest} — but require rare, high-resolution data.
+}
+\end{frame}
+
+
+\begin{frame}{Sampling Variability and Confidence Intervals}
+\small
+
+\begin{block}{\textbf{A}: Individual $A_i \sim \text{Exp}(\lambda)$, $S_i \sim \text{Exp}(\mu)$}
+\begin{itemize}
+    \item $n_A$ interarrivals, $n_S$ services observed
+    \item {MLEs} (from i.i.d. exponentials):
+\end{itemize}
+\[
+\boxed{
+\hat{\lambda} = \frac{n_A}{\sum A_i}, \quad
+\hat{\mu} = \frac{n_S}{\sum S_i}
+}
+\]
+\[
+\boxed{
+\sqrt{n_A} (\hat{\lambda} - \lambda) \xrightarrow{d} \mathcal{N}(0, \lambda^2),
+\quad
+\sqrt{n_S} (\hat{\mu} - \mu) \xrightarrow{d} \mathcal{N}(0, \mu^2)
+}
+\]
+\footnotesize
+\[
+\boxed{
+\text{95\% CI}: \;
+\hat{\lambda} \pm 1.96 \frac{\hat{\lambda}}{\sqrt{n_A}},
+\qquad
+\hat{\mu} \pm 1.96 \frac{\hat{\mu}}{\sqrt{n_S}}
+}
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{Sampling Variability and Confidence Intervals}
+\footnotesize
+
+\begin{block}{\textbf{B}: Aggregates on $[0,T]$}
+\begin{itemize}
+    \item $N_A(T)$, $C(T)$, $B(T) = \text{busy time}$
+    \item {Asymptotic variance} (from Poisson/CTMC):
+\end{itemize}
+\[
+\boxed{
+\Var(\hat{\lambda}) \approx \frac{\lambda}{T},
+\qquad
+\Var(\hat{\mu}) \approx \frac{\mu}{B(T)}
+}
+\]
+\footnotesize
+\[
+\boxed{
+\text{95\% CI}: \;
+\hat{\lambda} \pm 1.96 \sqrt{\frac{\hat{\lambda}}{T}},
+\qquad
+\hat{\mu} \pm 1.96 \sqrt{\frac{\hat{\mu}}{B(T)}}
+}
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{Sampling Variability and CIs}
+\footnotesize
+\begin{block}{\textbf{C}: Full $Q(t)$ trajectory}
+\begin{itemize}
+    \item Extract $N_A(T)$, $C(T)$, $B(T)$ $\to$ \textbf{same as B}
+    \item \textbf{Asymptotic} CIs (identical to B)
+\end{itemize}
+\[
+\boxed{
+\hat{\lambda} \pm 1.96 \sqrt{\frac{\hat{\lambda}}{T}},
+\;\;
+\hat{\mu} \pm 1.96 \sqrt{\frac{\hat{\mu}}{B(T)}}
+}
+\]
+\notebox{
+\textbf{A}: Exact. \textbf{B \& C}: Asymptotic (large $T$, $\rho < 1$), but enables \emph{model validation}.
+}
+\end{block}
+\end{frame}
+
+
+\begin{frame}{Plug-in Performance: Estimating $L = \frac{\rho}{1-\rho}$}
+\small
+
+\begin{block}{M/M/1 Performance Metrics}
+\[
+\boxed{
+L = \frac{\rho}{1-\rho}, \quad
+L_q = \frac{\rho^2}{1-\rho}, \quad
+W = \frac{1}{\mu - \lambda}, \quad
+W_q = \frac{\lambda}{\mu(\mu - \lambda)}
+}
+\]
+with $\rho = \lambda / \mu < 1$.
+\end{block}
+
+\begin{block}{Plug-in Estimator}
+Replace $(\lambda, \mu) \to (\hat{\lambda}, \hat{\mu})$:
+\[
+\boxed{\hat{L} = \frac{\hat{\rho}}{1 - \hat{\rho}}, \quad \hat{\rho} = \frac{\hat{\lambda}}{\hat{\mu}}}
+\]
+\end{block}
+
+\end{frame}
+
+\begin{frame}{Delta Method for Uncertainty in $\hat{L}$}
+\footnotesize
+
+\begin{block}{Asymptotic Variance}
+Let $g(\lambda, \mu) = \dfrac{\lambda/\mu}{1 - \lambda/\mu} = \dfrac{\lambda}{\mu-\lambda}$.  
+Using the gradient 
+\[
+\nabla g = \left( \frac{\partial g}{\partial \lambda}, \frac{\partial g}{\partial \mu} \right)
+= \left( \frac{\mu}{(\mu - \lambda)^2}, \; \frac{-\lambda}{(\mu - \lambda)^2} \right).
+\]
+the variances $\Var(\hat\lambda)\approx \lambda/T$, $\Var(\hat\mu)\approx \mu/B(T)$ (assuming independence), the Delta method gives:
+
+$$\boxed{ \Var(\hat{L}) \approx \frac{1}{(\mu - \lambda)^4} \left[ \frac{\mu^2 \lambda}{T} + \frac{\lambda^2 \mu}{B(T)} \right] }$$
+Replace unknowns by hats for a plug-in estimate.\; Near $\rho\to1$, the factor $\big(\tfrac{\mu}{\mu-\lambda}\big)^4$ inflates uncertainty.
+
+
+\[
+\boxed{\text{95\% CI (delta)}: \; \hat{L} \pm 1.96\, \sqrt{{\Var}(\hat L)}}
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{Plug-in Performance: Numerical Example}
+\small
+\begin{example}
+$T = 1000$, $N_A=800$, $C=790$, $B(T)=900$  
+$\hat{\lambda}=0.8$, $\hat{\mu}=790/900\approx0.878$, $\hat{\rho}\approx0.911$  
+$\hat{L} \approx 10.24$  
+
+Delta variance with $\nabla g$ above and $\Var(\hat\lambda),\Var(\hat\mu)$ from B):
+\[
+\widehat{\Var}(\hat{L}) \;\approx\; \left(\frac{\hat{\mu}}{\hat{\mu}-\hat{\lambda}}\right)^{\!4} \left( \frac{\hat{\lambda}}{\hat{\mu}^2 T} + \frac{\hat{\lambda}^2}{\hat{\mu}\,B(T)}\right).
+\]
+Numerically, this yields a \emph{large} standard error (SE $\approx 5.8$) and a wide CI, reflecting near-criticality ($\hat\rho\approx0.91$).
+\end{example}
+
+\notebox{
+{Near criticality} ($\hat{\rho} \to 1^-$): $\hat{L} \to \infty$, variance explodes.  
+{Always} check $\hat{\rho} < 1$ and report uncertainty!
+}
+\end{frame}
+
+
+\section{Estimating M/G/1}
+
+\begin{frame}{M/G/1: Model}
+\small
+
+\begin{block}{M/G/1 Queue}
+\begin{itemize}
+    \item Arrivals: Poisson process rate $\lambda$
+    \item Service: i.i.d. with distribution $G$, mean $m_1 = \mathbb{E}[S]$, second moment $m_2 = \mathbb{E}[S^2]$
+    \item Stability: $\rho = \lambda m_1 < 1$
+\end{itemize}
+\end{block}
+
+\begin{block}{Pollaczek-Khinchine Formula}
+\[
+\boxed{
+\mathbb{E}[W_q] = \frac{\lambda m_2}{2(1 - \rho)} = \frac{\lambda m_2}{2(1 - \lambda m_1)}
+}
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{M/G/1: Plug-in Estimators}
+
+
+\begin{block}{Data on $[0,T]$}
+\begin{itemize}
+    \item $N_A(T)$: number of arrivals
+    \item $S_1, \dots, S_{n_S}$: \emph{observed service times} (assume all completed)
+\end{itemize}
+\end{block}
+
+\begin{block}{Plug-in Estimators}
+\[
+\boxed{
+\begin{aligned}
+\hat{\lambda} &= \frac{N_A(T)}{T}, \quad
+\hat{m}_1 = \overline{S} = \frac{1}{n_S} \sum S_i, \\
+\hat{m}_2 &= \overline{S^2} = \frac{1}{n_S} \sum S_i^2, \quad
+\hat{\rho} = \hat{\lambda} \cdot \hat{m}_1
+\end{aligned}
+}
+\]
+
+\[
+\boxed{\; \hat W_{q}^{\mathrm{PK}} = \dfrac{\hat{\lambda}\,\hat{m}_2}{2\,\big(1 - \hat{\rho}\big)}\;}
+\]
+\end{block}
+
+\end{frame}
+
+
+\begin{frame}{Uncertainty Propagation: Delta Method}
+\footnotesize
+
+Let $g(\lambda, m_1, m_2) = \frac{\lambda m_2}{2(1 - \lambda m_1)}$.
+
+\begin{block}{Gradient}
+\[
+\nabla g^T 
+= \left(
+\dfrac{m_2}{2(1 - \rho)^2},
+\dfrac{\lambda^2 m_2}{2(1 - \rho)^2},
+\dfrac{\lambda}{2(1 - \rho)}
+\right)
+\]
+\end{block}
+
+\begin{block}{Asymptotic Covariance of Estimators}
+%Assume $T \to \infty$, $n_S \to \infty$:
+\[
+\Cov\begin{pmatrix} \hat{\lambda} \\ \hat{m}_1 \\ \hat{m}_2 \end{pmatrix}
+\approx
+\begin{pmatrix}
+\dfrac{\lambda}{T} & 0 & 0 \\
+0 & \dfrac{\Var(S)}{n_S} & \dfrac{\Cov(S, S^2)}{n_S} \\
+0 & \dfrac{\Cov(S, S^2)}{n_S} & \dfrac{\Var(S^2)}{n_S}
+\end{pmatrix}
+\]
+%Estimate these by replacing population moments with their sample counterparts.
+\end{block}
+
+\begin{block}{Delta Method Variance}
+\[
+\boxed{\; \Var\!\big(\hat W_{q}^{\mathrm{PK}}\big) \;\approx\; (\nabla g)^\top \, \hat{\Sigma} \, (\nabla g)\;}
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{Bootstrap: Input vs System}
+\footnotesize
+
+\begin{block}{Caution}
+\textbf{Do not} naively resample inter-arrivals $A_i$ and services $S_i$ \emph{independently} to bootstrap queue performance. Queueing \emph{creates dependence} via the workload process; you must simulate dynamics or use regenerative structure.
+\end{block}
+
+\begin{block}{Two Valid Paths}
+\begin{itemize}
+  \item \textbf{Input bootstrap (PK plug-in)}: Resample service times $S_i$ to propagate uncertainty in $(m_1,m_2)$; 
+  treat $\lambda$ parametrically (e.g., Poisson).\; 
+  This yields a CI for the \emph{PK plug-in} $\hat W_q^{\mathrm{PK}}$, \emph{not} for the true queue output.
+  \item \textbf{System bootstrap (regenerative)}: Partition the trajectory into \emph{busy cycles} (idle-to-idle), treat cycles as i.i.d., and resample cycles to form a CI for mean waiting time (ratio-of-means).
+\end{itemize}
+\end{block}
+
+\notebox{\textbf{Bottom line}: Input bootstrap quantifies \emph{parameter} uncertainty in PK; for \emph{system} uncertainty, use regenerative or block bootstrap and preserve dependence.}
+\end{frame}
+
+\begin{frame}{Input Bootstrap (PK Plug-in): Setup}
+\footnotesize
+\begin{block}{Target}
+Estimate uncertainty in the \emph{PK plug-in} \; $\displaystyle \hat W_{q}^{\mathrm{PK}} = \frac{\hat\lambda\,\hat m_2}{2(1-\hat\rho)}$ \; arising from finite samples of the inputs $(\lambda, m_1, m_2)$.
+\end{block}
+
+\begin{block}{Data and Assumptions}
+On $[0,T]$: observe arrivals (count $N_A(T)$) and service samples $S_1,\dots,S_{n_S}$ (i.i.d.). Assume Poisson arrivals and i.i.d. services; $\rho = \lambda m_1 < 1$.
+\end{block}
+
+\begin{block}{Notation}
+$\hat\lambda = N_A(T)/T$, \; $\hat m_1 = \overline S$, \; $\hat m_2 = \overline{S^2}$, \; $\hat\rho = \hat\lambda\,\hat m_1$.
+\end{block}
+\end{frame}
+
+\begin{frame}{Input Bootstrap (PK Plug-In): Algorithm}
+\footnotesize
+\begin{block}{Basic (service-only) bootstrap}
+\begin{enumerate}
+  \item Resample $S_1^*,\dots,S_{n_S}^*$ with replacement from $\{S_i\}$.
+  \item Compute $\hat m_1^*, \hat m_2^*$ from the resample; set $\hat\lambda^*=\hat\lambda$ (fixed exposure).
+  \item Form $\displaystyle (\hat W_{q}^{\mathrm{PK}})^* = \frac{\hat\lambda^*\,\hat m_2^*}{2\big(1-\hat\lambda^*\,\hat m_1^*\big)}$.
+  \item Repeat $B$ times; take percentile CI of $\{(\hat W_{q}^{\mathrm{PK}})^*_b\}$.
+\end{enumerate}
+\end{block}
+
+\begin{block}{Including arrival uncertainty}
+Optionally, draw $N_A^*(T)\sim\mathrm{Poisson}(\hat\lambda T)$ and set $\hat\lambda^*=N_A^*(T)/T$. This treats arrival sampling variability consistently with Poisson exposure.
+\end{block}
+
+\begin{block}{Remarks}
+This CI reflects \emph{input} uncertainty only (PK formula). It is \textbf{not} a CI for the true queue mean under finite horizon — use regenerative/bootstrap of busy cycles for that.
+\end{block}
+\end{frame}
+
+\begin{frame}{System Bootstrap (Regenerative): Details}
+\footnotesize
+\begin{block}{Cycle identification}
+Detect idle-to-idle cycles. For each cycle $k$: total waiting $W_k=\sum_{i\in\mathcal C_k} W_{q,i}$, number of jobs $N_k=|\mathcal C_k|$.
+\end{block}
+
+\begin{block}{Estimator and CI}
+Point: $\displaystyle \hat W_q = \frac{\sum_k W_k}{\sum_k N_k}$.\; Bootstrap: resample cycles $\mathcal C_k$ with replacement to build $\{\hat W_q^{*(b)}\}$ and a percentile CI.
+\end{block}
+
+\begin{block}{Pros/Cons}
+\textbf{Pros}: Preserves dependence; valid system-level uncertainty.\; \textbf{Cons}: Needs many complete cycles; sensitive near criticality (long cycles).
+\end{block}
+\end{frame}
+
+
+\begin{frame}{Parametric Options for Service Distribution}
+\footnotesize
+
+\begin{block}{Assume $S \sim \text{Gamma}(\alpha, \beta)$}
+\[
+m_1 = \frac{\alpha}{\beta}, \quad m_2 = \frac{\alpha(\alpha+1)}{\beta^2}
+\]
+
+MLE:
+\[
+\hat{\alpha}, \hat{\beta} \quad \to \quad
+\hat{m}_1 = \frac{\hat{\alpha}}{\hat{\beta}}, \;
+\hat{m}_2 = \frac{\hat{\alpha}(\hat{\alpha}+1)}{\hat{\beta}^2}
+\]
+
+Plug into PK formula.
+\end{block}
+
+\begin{block}{Lognormal, Weibull, etc.}
+Same idea: estimate parameters $\to$ compute $\hat{m}_1, \hat{m}_2$.
+\end{block}
+\end{frame}
+
+
+\begin{frame}{Numerical Example: M/G/1}
+\footnotesize
+
+\begin{example}
+$T = 1000$, $N_A(T) = 800$, $n_S = 790$ services observed  
+Sample: $\overline{S} = 1.125$, $\overline{S^2} = 1.406$  
+\[
+\hat{\lambda} = 0.8, \;
+\hat{m}_1 = 1.125, \;
+\hat{m}_2 = 1.406, \;
+\hat{\rho} = 0.9
+\]
+
+\[
+\widehat{W_q} = \frac{0.8 \cdot 1.406}{2(1 - 0.9)} = \frac{1.1248}{0.2} = 5.624
+\]
+
+\textbf{Bootstrap CI} (B=1000): $[4.1, 7.8]$  
+\textbf{Delta CI} (approx): $[4.3, 7.0]$  
+\end{example}
+
+\notebox{
+Near $\hat{\rho} = 0.9$, small changes in $\hat{\rho}$ $\to$ large changes in $\hat{W}_q$.  
+{Uncertainty explodes as $\rho \to 1$}.
+}
+
+\end{frame}
+
+
+\begin{frame}{Case Study: M/G/1 with Uniform Service}
+\footnotesize
+
+\begin{block}{Scenario}
+Customer-support chat where each ticket requires a bounded handling time due to SLA constraints and triage tools.
+\end{block}
+
+\begin{block}{Model}
+Arrivals: Poisson($\lambda$).\; Service: $S\sim\mathrm{Unif}(a,b)$, independent of arrivals.
+\[
+\boxed{ \; m_1=\mathbb E[S]=\tfrac{a+b}{2},\quad m_2=\mathbb E[S^2]=\tfrac{a^2+ab+b^2}{3},\quad \rho=\lambda m_1<1\; }
+\]
+PK plug-in for the mean waiting time:
+\[ \hat W_q = \frac{\hat\lambda\,\hat m_2}{2(1-\hat\rho)}. \]
+\end{block}
+
+\begin{example}
+$a=0.5$, $b=1.5$ minutes $\Rightarrow$ $m_1=1.0$, $m_2=\tfrac{0.25+0.75+2.25}{3}=1.083\overline{3}$; with $\lambda=0.5$/min, $\rho=0.5$.
+\end{example}
+\end{frame}
+
+\begin{frame}{Uniform Case: Dataset and Tasks}
+\footnotesize
+\begin{block}{Dataset schema (per job)}
+arrival\_time, service\_time, start\_service\_time, completion\_time, wait\_time, system\_time, queue\_len\_at\_arrival
+\end{block}
+
+\begin{block}{Tasks}
+\begin{itemize}
+  \item Estimate $\hat\lambda = N(T)/T$ from arrivals in $[0,T]$.
+  \item Estimate $\hat m_1,\hat m_2$ from service\_time samples.
+  \item Compute $\hat W_q$ and compare to empirical mean wait.
+  \item Build a 95\% CI using delta method and via bootstrap; discuss differences.
+  \item Stress test near criticality by increasing $\lambda$ or $b$; observe sensitivity.
+\end{itemize}
+\end{block}
+\end{frame}
+
+
+
+\section{Summary}
+
+\begin{frame}{Key Takeaways}
+  \begin{itemize}
+    \item Poisson rate: $\hat\lambda=N(T)/T$; sufficient statistic $N(T)$; exact variance $\lambda/T$.
+    \item M/M/1: $\hat\lambda$ from counts over time; $\hat\mu$ from completions over busy time or from service samples.
+    \item M/G/1: estimate $\lambda$ and service moments; plug into PK; use delta or bootstrap for CIs.
+    \item Always check stability ($\hat\rho<1$) and report uncertainty, especially near critical regimes.
+  \end{itemize}
+\end{frame}
+
+\end{document}
