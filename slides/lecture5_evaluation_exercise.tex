@@ -1,0 +1,104 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{AMU}
+\usepackage{amsmath, amssymb}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\usepackage{bm}
+\usepackage{booktabs}
+
+\title[Evaluation Exercise]{Stochastic Models: Evaluation Exercise}
+\subtitle{Lecture 5 \textendash{} M/G/2 Case Study}
+\author{Sebastian Müller}
+\date{Lecture 5}
+
+\newcommand{\definitionblock}[1]{\begin{block}{Definition}#1\end{block}}
+\newcommand{\theorembox}[1]{\begin{block}{Theorem}#1\end{block}}
+\newcommand{\notebox}[1]{\begin{block}{Note}#1\end{block}}
+\newcommand{\ideabox}[1]{\begin{block}{Idea}#1\end{block}}
+
+\begin{document}
+
+\section{Overview}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Goal of the Evaluation}
+  \begin{itemize}
+    \item Work from a raw event log to a plausible stochastic queueing model.
+    \item Infer arrival and service parameters from data, including uncertainty.
+    \item Assess performance (waiting times, mean number in queue $L_q$, utilisation) of a two-server system.
+    \item Practice telling a clear modelling story from noisy real-world data.
+  \end{itemize}
+\end{frame}
+
+\section{Scenario}
+
+\begin{frame}{System Description}
+  \begin{itemize}
+    \item Small ML-backed support platform handling ``complex'' tickets.
+    \item Two identical human agents process tickets in parallel (two servers).
+    \item All incoming tickets during the observation window enter this two-server system and are recorded in the log.
+    \item Each complex ticket incurs a fixed overhead (reading context, loading tools) plus a random processing time.
+  \end{itemize}
+  \medskip
+  \notebox{
+  For modelling we treat this as an $M/G/2$ queue: Poisson arrivals (unknown rate), i.i.d.\ service times with unknown distribution $G$, and two identical servers.
+  }
+\end{frame}
+
+\begin{frame}{What Data You Get}
+  \begin{itemize}
+    \item One CSV log from a contiguous observation window (no gaps).
+    \item One row per completed ticket, with fields:
+      \begin{itemize}
+        \item arrival\_time, start\_service\_time, completion\_time
+        \item service\_time, wait\_time, system\_time
+        \item queue\_len\_at\_arrival (tickets in system just before arrival)
+      \end{itemize}
+    \item Jobs that arrive before the end of the window are included even if they complete later.
+  \end{itemize}
+\end{frame}
+
+\section{Tasks}
+
+\begin{frame}{Modelling Tasks}
+  \begin{itemize}
+    \item Clean and validate the log (nonnegative waits, temporal ordering).
+    \item Diagnose the arrival process: inter-arrival distribution, approximate stationarity, estimate $\hat\lambda$ with a CI.
+    \item Explore the service-time distribution: evidence of a lower bound (fixed overhead) and an approximately memoryless tail.
+    \item Propose a simple parametric family for $G$ (e.g.\ constant offset + exponential) and fit its parameters.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Performance and Uncertainty}
+  \begin{itemize}
+    \item Use your fitted model to estimate utilisation $\hat\rho = \hat\lambda \hat m_1 / 2$ for the two-server system.
+    \item Estimate the mean number of waiting jobs $L_q$ from the data and relate it to $\hat\lambda$ and $\overline{W}_q$ (Little's Law).
+    \item Compare empirical mean waiting time from the log to a model-based prediction (via simulation or an $M/G/2$ approximation).
+    \item Quantify uncertainty for at least one key metric (e.g.\ bootstrap or regenerative analysis over cycles).
+  \end{itemize}
+  \medskip
+  \notebox{
+  You may reuse any error-control or bootstrap techniques from earlier lectures (delta method, input bootstrap, regenerative bootstrap, simulation-based CIs, \dots).
+  }
+\end{frame}
+
+\section{Deliverables}
+
+\begin{frame}{Deliverables and Grading}
+  \begin{itemize}
+    \item A clear description of your chosen model (arrival process, service family, number of servers).
+    \item Parameter estimates with at least one uncertainty measure (CI or standard error).
+    \item Comparison between empirical and model-based performance (focus on waiting time, mean number in queue $L_q$, and utilisation).
+    \item Short discussion of diagnostics and model limitations (what the model misses, robustness of conclusions).
+  \end{itemize}
+  \medskip
+  \notebox{
+  Emphasis is on \emph{reasoned modelling and diagnostics}, not on guessing the exact hidden parameters.
+  }
+\end{frame}
+
+\end{document}
