@@ -1,0 +1,243 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{AMU}
+\usepackage{amsmath, amssymb}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\usepackage{bm}
+\usepackage{booktabs}
+
+\title[Model Selection \& Optimisation]{Stochastic Models: Model Selection and Optimisation}
+\subtitle{Lecture 6 \textendash{} From Evaluation to Decisions}
+\author{Sebastian Müller}
+\date{Lecture 6}
+
+\newcommand{\definitionblock}[1]{\begin{block}{Definition}#1\end{block}}
+\newcommand{\theorembox}[1]{\begin{block}{Theorem}#1\end{block}}
+\newcommand{\notebox}[1]{\begin{block}{Note}#1\end{block}}
+\newcommand{\ideabox}[1]{\begin{block}{Idea}#1\end{block}}
+
+\begin{document}
+
+\section{Overview}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Where We Are}
+  \begin{itemize}
+    \item \textbf{Lecture 1}: Motivation, Poisson refresher, simulation mindset.
+    \item \textbf{Lecture 2}: Queueing basics, M/M/1 and M/M/$c$, Little's Law.
+    \item \textbf{Lecture 3}: Error control, CLT and concentration, variance reduction, sensitivity.
+    \item \textbf{Lecture 4}: Parameter estimation for Poisson, M/M/1, M/G/1; plug-in performance.
+    \item \textbf{Lecture 5}: M/G/2 evaluation exercise from event log to fitted model.
+  \end{itemize}
+  \vspace{0.6em}
+  \textit{Today: move from \emph{evaluation} of a given system to \emph{optimisation} of design choices.}
+\end{frame}
+
+\begin{frame}{Goals for Lecture 6}
+  \begin{itemize}
+    \item Decide which queueing model ($G/G/c/K/\dots$) is appropriate for a given dataset and question.
+    \item Use fitted models to run simulation experiments with confidence intervals.
+    \item Perform \textbf{scenario analysis}: how changes in load, variability, or capacity affect performance.
+    \item Introduce \textbf{costs} and formulate a simple optimisation problem over design variables (e.g.\ number of servers).
+    \item Connect the full pipeline: data $\to$ model $\to$ estimation $\to$ simulation $\to$ decision.
+  \end{itemize}
+\end{frame}
+
+\section{Choosing a Model}
+
+\begin{frame}{From Data to Candidate Models}
+  \begin{itemize}
+    \item Starting point: cleaned event log (Lecture 5) with arrivals, service times, and queue lengths.
+    \item We want a \textbf{parsimonious} model that captures key features relevant for decisions.
+    \item Two equally important dimensions:
+    \begin{itemize}
+      \item \textbf{Structural choice}: M/M/1, M/M/$c$, M/G/1, M/G/$c$, GI/G/$c$, finite buffers, abandonment, priorities, networks.
+      \item \textbf{Parameter estimation}: $\hat\lambda$, service distribution parameters, variability measures.
+    \end{itemize}
+    \item Model choice should be driven by \emph{data}, \emph{domain knowledge}, and \emph{decision needs}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Dimensions of Choice}
+  \begin{itemize}
+    \item \textbf{Arrival process}
+      \begin{itemize}
+        \item Poisson (homogeneous) vs.\ time-varying rate vs.\ overdispersed arrivals.
+        \item Diagnostics: inter-arrival histogram, ECDF, overdispersion of counts, time-of-day effects.
+      \end{itemize}
+    \item \textbf{Service-time distribution}
+      \begin{itemize}
+        \item Exponential vs.\ deterministic offset + exponential vs.\ heavy-tailed.
+        \item Diagnostics: empirical CV, skewness, log-survival plot, QQ-plot against exponential.
+      \end{itemize}
+    \item \textbf{System structure}
+      \begin{itemize}
+        \item Number of servers $c$, buffer capacity $K$, priority classes, reneging/abandonment.
+        \item Single-node approximation vs.\ network / multi-stage system.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Simple vs Complex Models}
+  \ideabox{Start with a simple baseline model and add complexity only when necessary for decisions.}
+  \begin{itemize}
+    \item Baselines:
+      \begin{itemize}
+        \item M/M/$c$ for systems with no strong evidence against exponential assumptions.
+        \item M/G/1 or M/G/$c$ when service-time variability clearly deviates from exponential.
+      \end{itemize}
+    \item More flexible options:
+      \begin{itemize}
+        \item GI/G/$c$ approximations when inter-arrivals also deviate from Poisson.
+        \item Empirical service distributions (resampling) when no simple parametric family fits well.
+      \end{itemize}
+    \item Trade-off:
+      \begin{itemize}
+        \item Simpler models are easier to explain and calibrate.
+        \item Richer models may better capture tails or bursts.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Model Selection Guidelines}
+  \small
+  \begin{itemize}
+    \item \textbf{Structural consistency}: data must not contradict assumptions (e.g.\ observed concurrency $\le c$ if you model $c$ servers; no abandonment if model excludes it).
+    \item \textbf{Descriptive fit}: do simulated histograms / quantiles for arrivals and services match the data?
+     \item \textbf{Performance fit}: does the model reproduce key metrics (mean $W_q$, $L_q$, utilisation) within uncertainty bands?
+    \item \textbf{Decision relevance}: only add complexity if it changes the recommendation (e.g.\ number of servers to deploy).
+    \item \textbf{Interpretability}: stakeholders should understand the assumptions and their limits.
+  \end{itemize}
+  \vspace{0.4em}
+  \textit{Pick the simplest model that fits the data and supports the decision without violating observed behaviour.}
+\end{frame}
+
+\begin{frame}{Case Study Pitfall: Fitting M/G/3 Data with M/G/2}
+  \begin{itemize}
+    \item \textbf{What went wrong in Lecture 5?}
+      \begin{itemize}
+        \item Data inspection showed moments with 3 jobs in service $\Rightarrow$ evidence for $c=3$.
+        \item Fitting M/G/2 underestimates capacity, inflates utilisation, and biases wait predictions.
+      \end{itemize}
+    \item \textbf{How to avoid it}
+      \begin{itemize}
+        \item Plot max number in service over time; compare to assumed $c$.
+        \item Refit with $c=2$ vs $c=3$ and compare simulated $W_q$, $L_q$, tails \emph{with CIs}.
+        \item Prefer the model that (i) matches observed service concurrency and (ii) does not degrade fit on waits/queues.
+      \end{itemize}
+    \item \textbf{Report explicitly} when structural choices are ambiguous; give a decision recommendation for each plausible $c$.
+  \end{itemize}
+\end{frame}
+
+\section{Scenario Analysis}
+
+\begin{frame}{What-If Analysis}
+  \ideabox{Use the fitted model as a baseline and explore how performance changes when we perturb inputs or design choices.}
+  \begin{itemize}
+    \item Vary arrival rate: $\lambda = \alpha\,\hat\lambda$ for $\alpha \in \{0.8, 1.0, 1.2\}$ (demand uncertainty).
+    \item Vary number of servers: $c \in \{1,2,3,4\}$ (staffing / capacity decisions).
+    \item Optionally vary service variability: more/less variable $G$ with the same mean.
+    \item For each scenario, simulate and compute CIs for $W_q$, $L_q$, utilisation, and service-level metrics.
+  \end{itemize}
+  \vspace{0.4em}
+  \textit{Goal: identify regimes where the system is robust and regimes where it is fragile (near saturation).}
+\end{frame}
+
+\begin{frame}{Interpreting Scenario Tables}
+  \begin{itemize}
+    \item Present results as tables or heatmaps:
+      \begin{itemize}
+        \item Rows: number of servers $c$.
+        \item Columns: demand multiplier $\alpha$ or other scenario parameter.
+      \end{itemize}
+    \item For each cell, report:
+      \begin{itemize}
+        \item Point estimates and 95\% CIs for $W_q$, $L_q$, utilisation.
+        \item Possibly probability of violating a service-level target (e.g.\ $P(W_q > w^\ast)$).
+      \end{itemize}
+    \item Use these tables to communicate trade-offs:
+      \begin{itemize}
+        \item Where does adding a server significantly improve waiting times?
+        \item Where do CIs for different configurations overlap (no clear winner)?
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{Cost and Optimisation}
+
+\begin{frame}{Adding a Cost Model}
+  \definitionblock{We translate performance metrics into monetary (or utility) costs to support design decisions.}
+  \begin{itemize}
+    \item Basic ingredients:
+      \begin{itemize}
+        \item Server cost $c_{\text{server}}$ per server per unit time.
+        \item Waiting cost $c_{\text{wait}}$ per unit waiting time per job.
+        \item Optional penalty for SLA violations (e.g.\ if $W_q > w^\ast$).
+      \end{itemize}
+    \item Given arrival rate $\lambda$ and mean waiting time $W_q(c)$ for configuration $c$:
+      \[
+        C(c) = c_{\text{server}} \cdot c \;+\; c_{\text{wait}} \cdot \lambda\, W_q(c).
+      \]
+    \item $W_q(c)$ is estimated via simulation; hence $C(c)$ is also stochastic with a CI.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Simulation-Based Optimisation}
+  \begin{itemize}
+    \item For small discrete design spaces (e.g.\ $c=1,\dots,6$), we can simply enumerate options:
+      \begin{itemize}
+        \item For each $c$, estimate $W_q(c)$ via multiple replications.
+        \item Compute $\hat C(c)$ and a 95\% CI using the CI for $W_q(c)$.
+      \end{itemize}
+    \item Choose the configuration with the smallest $\hat C(c)$, but report uncertainty:
+      \begin{itemize}
+        \item If CIs for $C(c)$ overlap, it may be safer to report a set of near-optimal options.
+      \end{itemize}
+    \item Optional: add constraints, e.g.\ $P(W_q > w^\ast) \le \alpha$ (service-level constraint), and pick the cheapest feasible $c$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{From Numbers to Recommendations}
+  \begin{itemize}
+    \item Translate optimisation results into plain-language recommendations:
+      \begin{itemize}
+        \item ``With current demand, 2 agents minimise expected cost; 3 agents only improve waiting times slightly.''
+        \item ``If demand increases by 20\%, the system becomes unstable with 2 agents; we recommend adding a third.''
+      \end{itemize}
+    \item Emphasise uncertainty: use CIs and scenario analysis to show robustness.
+    \item Document assumptions: model structure, stationarity, independence, stability conditions.
+  \end{itemize}
+\end{frame}
+
+\section{Wrap-Up}
+
+\begin{frame}{Course Pipeline Recap}
+  \begin{itemize}
+    \item \textbf{Model}: choose a queueing framework and assumptions informed by data and context.
+    \item \textbf{Estimate}: infer parameters from data (Lecture 4) and quantify input uncertainty.
+    \item \textbf{Simulate}: implement discrete-event simulations with error control (Lecture 3).
+    \item \textbf{Evaluate}: compare model predictions to observed performance (Lecture 5).
+    \item \textbf{Optimise}: use costs and constraints to recommend configurations (Lecture 6).
+  \end{itemize}
+  \vspace{0.4em}
+  \textit{This is the workflow you should apply in your final projects.}
+\end{frame}
+
+\begin{frame}{For Your Projects}
+  \begin{itemize}
+    \item Clearly state:
+      \begin{itemize}
+        \item Modelling assumptions and chosen queueing framework.
+        \item How parameters were estimated and with what uncertainty.
+        \item How simulation was used to compare policies or configurations.
+        \item What decision or recommendation you make and how robust it is.
+      \end{itemize}
+    \item Focus on a coherent modelling story rather than perfectly tuned parameters.
+  \end{itemize}
+\end{frame}
+
+\end{document}
