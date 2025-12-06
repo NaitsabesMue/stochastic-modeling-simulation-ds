@@ -38,7 +38,7 @@ This repository hosts materials for an optional M2 Data Science course on Poisso
 - **Final Mark**:
 
   $$
-  \max\!\left(\text{Exam},\ 0.5\,\text{CC} + 0.5\,\text{Exam}\right)
+  \max\left(\text{Exam},\ 0.5\,\text{CC} + 0.5\,\text{Exam}\right)
   $$
 
   In other words, a strong CC can compensate a weaker final project, but never the opposite.
