@@ -1,21 +1,5 @@
 # Stochastic Models and Simulation for Real-World Systems
 
-<!-- MathJax support for LaTeX in Markdown (local HTML renderers) -->
-<script>
-window.MathJax = {
-  tex: {
-    inlineMath: [["$", "$"], ["\(", "\)"]],
-    displayMath: [["$$","$$"], ["\[","\]"]],
-    processEscapes: true,
-    tags: "none"
-  },
-  options: {
-    skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"]
-  }
-};
-</script>
-<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
 This repository hosts materials for an optional M2 Data Science course on Poisson processes, and queueing systems. The course emphasizes intuition, simulation, and real-world modeling rather than formal proofs. The overarching goal is to use data and simulation to make well-argued decisions in the presence of variability (e.g., comparing system designs, parameter choices, or policies).
 
 > **Course Materials & Contributions**  
