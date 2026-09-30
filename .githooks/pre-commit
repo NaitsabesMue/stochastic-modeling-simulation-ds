@@ -1,0 +1,11 @@
+#!/bin/sh
+# Reject private paths even if somebody used git add -f.
+staged_paths=$(git diff --cached --name-only -z | tr '\000' '\n')
+printf '%s\n' "$staged_paths" | while IFS= read -r path; do
+  case "$path" in
+    students/*|data/raw/*|data/private/*|submissions/*|feedback/*|copies\ examen/*|notes_renfort_info_2_2025_2026.csv|auto_grade.py|grading_prompt.md)
+      printf 'Refusing private staged path: %s\n' "$path" >&2
+      exit 1
+      ;;
+  esac
+done
