@@ -36,6 +36,7 @@ For example, quiz scores of `0, 12, 13, 14, 15, 16` give `CC = 14` after droppin
 
 - [Lecture slides](slides/lecture1_motivation.pdf) and [source](slides/lecture1_motivation.tex)
 - [Python lab](notebooks/lecture1_poisson_warmup.ipynb)
+- [AnonymousBank dataset guide](data/anonymousbank_data_guide.md)
 - [Data provenance and rebuild instructions](data/README.md)
 
 The lab uses a non-identifying 15-minute arrival-count extract from the [Technion SEE Lab AnonymousBank data](https://seelab.net.technion.ac.il/data/). It contains November 1999 VRU-entry counts and excludes source-marked `PHANTOM` records. These are entries to the phone system, **not** arrivals to an agent queue. The original archive and row-level records remain outside Git. The source asks users to notify Prof. Avi Mandelbaum or the SEE team and acknowledge the data; see [data notes](data/README.md) before using it in class.

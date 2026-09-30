@@ -1,5 +1,7 @@
 # AnonymousBank teaching extract
 
+Start with the student-facing [AnonymousBank data guide](anonymousbank_data_guide.md) for the call journey, definitions of VRU and each outcome, all 17 raw fields, a redacted raw-data example, and the limits of the Week 1 extract. This file documents how the public aggregate was built and checked.
+
 Week 1 uses [`anonymousbank_nov1999_arrivals_15min.csv`](anonymousbank_nov1999_arrivals_15min.csv), an aggregate made from the November 1999 file in the [Technion SEE Lab AnonymousBank archive](https://seelab.net.technion.ac.il/data/). The [source documentation](https://see-center.iem.technion.ac.il/databases/AnonymousBank/Data/AnonymousBank.pdf) describes the 17 fields in each call record. The archive includes caller and agent identifiers; the teaching extract contains only `date`, local `time` (start of a 15-minute interval), and `entries` (number of records in that interval). It contains no call, customer, or agent identifiers.
 
 The extract counts **VRU entries**, not arrivals to an agent queue. It includes records with outcome `AGENT` or `HANG` and excludes `PHANTOM`, as the source documentation recommends. Zero-count intervals are present. The November source file has 41,019 records: 297 `PHANTOM` records were excluded, leaving 40,722 entries in 2,880 intervals. Keep this distinction when asking staffing questions: these counts alone do not give service times, queue arrivals, abandonment behavior, or the effect of adding an agent.
