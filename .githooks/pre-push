@@ -1,0 +1,23 @@
+#!/bin/sh
+# Check all history reachable from refs about to be pushed, including deleted paths.
+while read -r local_ref local_sha remote_ref remote_sha; do
+  case "$local_sha" in
+    0000000000000000000000000000000000000000) continue ;;
+  esac
+  git log --format= --name-only -z "$local_sha" | python3 -c '
+import sys
+
+private_prefixes = (
+    "students/", "instructor/", "data/raw/", "data/private/",
+    "submissions/", "feedback/", "copies examen/", "week01/exit_quiz",
+)
+private_files = {
+    "notes_renfort_info_2_2025_2026.csv", "auto_grade.py", "grading_prompt.md",
+}
+paths = (p.decode("utf-8", "surrogateescape") for p in sys.stdin.buffer.read().split(b"\0") if p)
+bad = sorted({p for p in paths if p.startswith(private_prefixes) or p in private_files})
+for path in bad:
+    print(f"Refusing push containing private path: {path}", file=sys.stderr)
+sys.exit(bool(bad))
+' || exit 1
+done

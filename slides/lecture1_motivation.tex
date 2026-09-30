@@ -1,313 +1,327 @@
-
 \documentclass{beamer}
 \usepackage[utf8]{inputenc}
 \usetheme{AMU}
-\usepackage{amsmath, amssymb}
-\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
 \usepackage{tikz}
+\usetikzlibrary{positioning}
 
-\newcommand{\usecasebadge}[2]{%
-  \begin{tikzpicture}[baseline={(current bounding box.center)}]
-    \fill[#1!20, draw=#1!70!black, rounded corners=3pt] (0,0) rectangle (1.6,1.6);
-    \node[text width=1.3cm, align=center, font=\scriptsize\bfseries, text=#1!80!black] at (0.8,0.8) {#2};
-  \end{tikzpicture}%
+% Keep both digits of late slide numbers inside the page boundary.
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox to .88\paperwidth{%
+    \hspace*{1em}{\color{AMU_dk2}\footnotesize\insertshorttitle}%
+    \hfil%
+    {\color{AMU_dk2}\footnotesize\insertframenumber{} / \inserttotalframenumber}%
+  }%
+  \vskip1ex%
 }
-\title[Stochastic Models and Simulation]{Stochastic Models and Simulation: Motivation \& Poisson Recap}
-\subtitle{Why Poisson Processes, Queues, and Renewal Theory Matter}
-\author{Sebastian Müller}
-\date{Lecture 1}
+
+\title[Stochastic Models and Simulation]{Stochastic Models and Simulation}
+\subtitle{Week 1: from observed calls to a testable model}
+\author{Sebastian M\"uller}
+\date{2026/27}
 
 \begin{document}
-
-\section{Motivation}
 
 \begin{frame}
   \titlepage
 \end{frame}
 
-\begin{frame}{Course Roadmap}
+\section{The question and the method}
+
+\begin{frame}{Why this course? What do you gain?}
+  An operations log shows what happened under one configuration. A decision often concerns a configuration never observed.
+  \vspace{0.5em}
   \begin{itemize}
-    \item \textbf{Lecture 1}: Motivation, Poisson recap, simulation mindset.
-    \item \textbf{Lecture 2}: Queueing theory basics, Markovian queues, simulation patterns.
-    \item \textbf{Lectures 3--4}: Renewal theory, regenerative analysis, heavy tails.
-    \item \textbf{Lectures 5--6}: Networks, resource allocation, optimisation under uncertainty.
-    \item \textbf{Lectures 7--8}: Project clinics, validation strategies, presentations.
+    \item Turn a concrete question, such as adding a bank-call agent, into outcomes and assumptions.
+    \item Build a small Python simulation of a proposed change.
+    \item Quantify simulation uncertainty and find assumptions that fail against real data.
+    \item Communicate a decision, including what the available evidence cannot establish.
   \end{itemize}
+  \vspace{0.3em}
+  \textbf{Your project:} carry that reasoning from observed data to a defensible recommendation.
+\end{frame}
+
+\begin{frame}{A question the existing records cannot answer}
+  \large
+  Would another agent reduce waiting at the bank's call centre?
+  \normalsize
   \vspace{0.6em}
-  \textit{We move from first principles to deployable stochastic simulations in eight sessions.}
-\end{frame}
-
-\begin{frame}{Framing the Gap}
   \begin{itemize}
-    \item Most data science programs focus on regression, classification, and ML.
-    \item But what about systems that evolve \textbf{over time} and under \textbf{uncertainty}?
-    \item Key questions:
-    \begin{itemize}
-      \item How long do users wait when servers are busy?
-      \item When will a machine fail again?
-      \item What’s the expected delay in a hospital triage?
-    \end{itemize}
-    \item These are not supervised learning problems – they require \textbf{stochastic models}.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Use Case: Cloud Infrastructure}
-  \begin{columns}[T]
-    \begin{column}{0.32\textwidth}
-      \centering
-      \usecasebadge{blue}{Cloud\\Infra}
-      \\[0.6em]
-      {\footnotesize Auto-scale compute to match bursty traffic.}
-    \end{column}
-    \begin{column}{0.68\textwidth}
-      \begin{itemize}
-        \item Servers handle requests arriving randomly over time.
-        \item Resource allocation modeled via \textbf{Poisson arrivals} + \textbf{queuing models}.
-        \item Objective: minimize latency, avoid overload.
-      \end{itemize}
-      \vspace{0.6em}
-      \textit{Example: AWS Auto Scaling uses modeled request rates to provision resources.}
-      \\[0.3em]
-      {\footnotesize AWS Auto Scaling monitors metrics (CPU, request count, latency) and automatically scales EC2 instances, containers, or serverless capacity up or down to match demand while controlling cost.}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Use Case: Call Centers}
-  \begin{columns}[T]
-    \begin{column}{0.32\textwidth}
-      \centering
-      \usecasebadge{teal}{Call\\Center}
-      \\[0.6em]
-      {\footnotesize Right-size staffing, manage service levels.}
-    \end{column}
-    \begin{column}{0.68\textwidth}
-      \begin{itemize}
-        \item Incoming calls $\to$ arrival process (Poisson or empirical).
-        \item Limited agents $\to$ queuing system (M/M/k).
-        \item Metrics: average wait time, service levels.
-      \end{itemize}
-      \vspace{0.6em}
-      \textit{Used by companies to staff efficiently and reduce wait times.}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{What Stakeholders Care About}
-  \begin{itemize}
-    \item \textbf{Reliability}: likelihood the system breaches SLA thresholds.
-    \item \textbf{Efficiency}: server utilisation vs. customer experience.
-    \item \textbf{Elasticity}: ability to scale up/down during seasonal peaks.
-    \item \textbf{Fairness}: which users incur delays; equity across customer classes.
-    \item \textbf{Resilience}: recovery profile after incidents or spikes.
-  \end{itemize}
-  \vspace{0.6em}
-  \textit{Queueing metrics translate these business objectives into measurable random variables.}
-\end{frame}
-
-\begin{frame}{Use Case: Hospitals}
-  \begin{columns}[T]
-    \begin{column}{0.32\textwidth}
-      \centering
-      \usecasebadge{red}{Health\\Care}
-      \\[0.6em]
-      {\footnotesize Triage limited resources across care stages.}
-    \end{column}
-    \begin{column}{0.68\textwidth}
-      \begin{itemize}
-        \item Patient arrivals: random (empirical or Poisson).
-        \item Multi-stage service (triage, doctor, tests).
-        \item Queueing + renewal theory to estimate wait times and allocate staff.
-      \end{itemize}
-      \vspace{0.6em}
-      \textit{Used during COVID-19 to plan emergency capacity.}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Use Case: Predictive Maintenance}
-  \begin{columns}[T]
-    \begin{column}{0.32\textwidth}
-      \centering
-      \usecasebadge{orange}{Industry\\4.0}
-      \\[0.6em]
-      {\footnotesize Balance uptime, spare parts, and repair crews.}
-    \end{column}
-    \begin{column}{0.68\textwidth}
-      \begin{itemize}
-        \item Machines degrade over time $\to$ failure is random.
-        \item Renewal processes model time-to-failure and repair.
-        \item Used in manufacturing and IoT to schedule maintenance.
-      \end{itemize}
-      \vspace{0.6em}
-      \textit{Industrial example: Siemens, Bosch use similar models.}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Use Case: Crypto and Finance}
-  \begin{columns}[T]
-    \begin{column}{0.32\textwidth}
-      \centering
-      \usecasebadge{purple}{Markets}
-      \\[0.6em]
-      {\footnotesize Quantify latency, auctions, and microstructure.}
-    \end{column}
-    \begin{column}{0.68\textwidth}
-      \begin{itemize}
-        \item Order arrival in exchanges modeled as Poisson processes.
-        \item Queueing logic in Ethereum gas auctions or Solana validator schedules.
-        \item Stochastic models used to analyze MEV, fairness, and latency.
-      \end{itemize}
-    \end{column}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Modeling Workflow}
-  \begin{enumerate}
-    \item \textbf{Observe}: collect arrival/service traces, understand constraints.
-    \item \textbf{Idealise}: pick parsimonious assumptions (Poisson arrivals, exponential service, finite buffers).
-    \item \textbf{Analyse}: derive quick estimates (Little's Law, stability bounds).
-    \item \textbf{Simulate}: stress-test policy choices, explore what-if scenarios.
-    \item \textbf{Validate}: compare with real data, refine assumptions, communicate insights.
-  \end{enumerate}
-  \vspace{0.4em}
-  \textit{Each lecture revisits this loop with richer building blocks.}
-\end{frame}
-
-\begin{frame}{Why Simulate?}
-  \begin{itemize}
-    \item Closed-form expressions are rare or complicated.
-    \item Simulation provides robust, interpretable insight.
-    \item We’ll use Python (with SimPy) to model real systems.
-  \end{itemize}
-\end{frame}
-
-\section{Poisson Refresher}
-
-\begin{frame}{Recap: Poisson Random Variable}
-  \begin{itemize}
-    \item Parameter $\lambda>0$; support on $\{0,1,2,\dots\}$.
-    \item Probability mass function: $\mathbb{P}(X=k) = e^{-\lambda}\tfrac{\lambda^k}{k!}$.
-    \item Models the \textbf{count of events} in a fixed interval given independent events at rate $\lambda$.
-    \item Examples: arrivals per minute, defects per meter, emails per hour.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Key Properties}
-  \begin{itemize}
-    \item Expectation and variance coincide: $\mathbb{E}[X]=\operatorname{Var}(X)=\lambda$.
-    \item \textbf{Aggregation}: sum of independent $\mathrm{Poi}(\lambda_i)$ is $\mathrm{Poi}(\sum \lambda_i)$.
-    \item \textbf{Thinning}: keep each event with prob. $p$ $\Rightarrow$ result is $\mathrm{Poi}(p\lambda)$.
-    \item Moment generating function: $M_X(t)=\exp\left(\lambda(e^t-1)\right)$.
-    \item Probability of $\geq 1$ event: $1-e^{-\lambda}$.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Poisson as a Binomial Limit}
-  \begin{itemize}
-    \item Start with $\mathrm{Bin}(n,p)$ where $n$ large, $p$ small, and $np\to\lambda$.
-    \item Then $\mathrm{Bin}(n,p)$ converges to $\mathrm{Poi}(\lambda)$.
-    \item Interpretation: many independent trials with tiny success probability.
-    \item Use for rare-event approximation and sanity-checking rate estimates.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Estimating $\lambda$ in Practice}
-  \begin{enumerate}
-    \item Choose a consistent window (per minute/hour, per location, per channel).
-    \item Compute $\hat{\lambda} = \tfrac{1}{n}\sum X_i$ from historical counts.
-    \item Use variance check: Poisson assumption suggests sample variance $\approx \hat{\lambda}$.
-    \item Incorporate seasonality via piecewise constant or spline-based rates.
-    \item Apply shrinkage/Empirical Bayes for low-volume segments.
-  \end{enumerate}
-  \vspace{0.4em}
-  \textit{These diagnostics appear in the notebook; bring your data to test them.}
-\end{frame}
-
-\begin{frame}{Recognising Poisson Limitations}
-  \begin{itemize}
-    \item \textbf{Overdispersion}: variance $\gg$ mean signals bursty or correlated arrivals.
-    \item \textbf{Time-of-day effects}: use non-homogeneous Poisson or piecewise rates.
-    \item \textbf{Feedback loops}: arrivals depend on system state (e.g., re-tries) $\Rightarrow$ need queueing networks.
-    \item \textbf{Heavy tails}: inter-arrival distributions with long memory require renewal/ARIMA/Hawkes models.
+    \item The records describe what happened with the staffing and routing that were in place.
+    \item They contain no observation of the proposed staffing change.
+    \item A simulation can explore that change, \emph{if} its assumptions survive comparison with observed behaviour.
   \end{itemize}
   \vspace{0.4em}
-  \textit{Flag these patterns early to avoid mis-specified simulations.}
+  \textbf{Today:} start with arrivals. We cannot estimate the effect on waiting from arrival counts alone.
 \end{frame}
 
-\begin{frame}{From Counts to Arrival Times}
+\begin{frame}{The course in one loop}
+  \centering
+  \begin{tikzpicture}[node distance=0.25cm, every node/.style={font=\small}]
+    \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm] (o) {Observe};
+    \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of o] (m) {Model};
+    \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of m] (s) {Simulate};
+    \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of s] (v) {Validate};
+    \node[draw,rounded corners,minimum width=1.7cm,minimum height=0.9cm,right=of v] (d) {Decide};
+    \draw[->,thick] (o)--(m);
+    \draw[->,thick] (m)--(s);
+    \draw[->,thick] (s)--(v);
+    \draw[->,thick] (v)--(d);
+    \draw[->,thick] (v.south) .. controls +(0,-0.9) and +(0,-0.9) .. (m.south);
+  \end{tikzpicture}
+  \vspace{1.1em}
   \begin{itemize}
-    \item If counts per interval follow $\mathrm{Poi}(\lambda)$, inter-arrival times are $\mathrm{Exp}(\lambda)$.
-    \item Memorylessness of the exponential $\Rightarrow$ independent increments for counts.
-    \item This coupling defines the homogeneous Poisson process.
-    \item Queues and renewal models rely on this structure.
+    \item \textbf{This week:} test an arrival-count model against a real call-centre extract.
+    \item \textbf{Across seven sessions:} add queues, estimation, uncertainty, model choice and a project decision.
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Poisson in Simulation}
-  \begin{itemize}
-    \item Python: \texttt{numpy.random.poisson(lam, size)} samples counts directly.
-    \item For arrival times, sample exponentials: \texttt{np.random.exponential(1/lambda\_rate)}.
-    \item In SimPy, schedule arrivals via \texttt{env.timeout(...)} using exponential draws.
-    \item Validate simulated averages and variances against $\lambda$.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Worked Example: Probability of an Arrival}
-  \begin{itemize}
-    \item Help desk receives on average $\lambda = 4$ tickets per hour.
-    \item For a 30 minute window: $\lambda_{0.5h} = 4 \times 0.5 = 2$.
-    \item Probability of at least one ticket: $1 - e^{-2} \approx 0.865$.
-    \item Probability of zero tickets in that window: $e^{-2} \approx 0.135$.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Checkpoint}
-  \begin{itemize}
-    \item What data or diagnostics would tell you a Poisson model is a poor fit?
-    \item If arrivals thin independently with prob. $0.3$, what is the new rate?
-    \item How would you simulate the time until the second arrival in Python?
-  \end{itemize}
-\end{frame}
-
-\section{Hands-On Kickoff}
-
-\begin{frame}{Exercise: Plain Python Warm-Up}
+\begin{frame}{Rules of the game: every three-hour session}
   \begin{enumerate}
-    \item Import \texttt{numpy as np}; 
-    
-    set \texttt{rng = np.random.default\_rng(42)}.
-    \item Let \texttt{lam = 4} per hour; compute \texttt{lambda\_window = lam * 0.5}.
-    \item Simulate \texttt{n\_windows = 1000} half-hour counts via \texttt{rng.poisson(lam=lambda\_window, size=n\_windows)}.
-    \item Report sample mean/variance and compare to the theoretical value $\lambda = 2$.
-    \item Empirically estimate $\mathbb{P}(X \ge 1)$ by checking \texttt{counts > 0}.
+    \item \textbf{First lecture segment:} students keep devices closed. Discuss the question and work short checks on paper.
+    \item \textbf{Notebook and exercises:} open your own computer; use Python, inspect data and record your reasoning.
+    \item \textbf{Final 10 minutes in sessions 1--6:} complete a printed multiple-choice quiz individually, without devices or LLMs.
   \end{enumerate}
-  \vspace{0.6em}
-  {\footnotesize Deliverables: short script + markdown cell summarising fit vs. theory.}
+  \vspace{0.5em}
+  Today the opening diagnostic is part of the screen-free segment. Session 7 ends with the project, without a CC quiz.
 \end{frame}
 
-\begin{frame}{Exercise: SimPy Arrival Stream}
-  \begin{enumerate}
-    \item Import \texttt{numpy as np} and \texttt{simpy}; create \texttt{env = simpy.Environment()} and define generator \texttt{arrival(env)}.
-    \item Inside the generator, loop: yield \texttt{env.timeout(np.random.exponential(1/lam))}.
-    \item For each arrival, log the timestamp and append to a list for post-analysis.
-    \item Run with \texttt{lam = 4} per hour for simulated duration \texttt{env.run(until=8)} (two hours).
-    \item Plot inter-arrival histogram and overlay the exponential density with rate $\lambda$.
-  \end{enumerate}
-  \vspace{0.6em}
-  {\footnotesize Stretch goal: promote the logged arrivals into a simple M/M/1 queue and compare waiting times.}
-\end{frame}
-
-\begin{frame}{Summary}
+\begin{frame}{Assessment: six paper quizzes}
   \begin{itemize}
-    \item Stochastic models give tools to reason under uncertainty.
-    \item Motivation: systems in cloud, healthcare, manufacturing, finance.
-    \item Foundations: Poisson counts, thinning/aggregation, exponential inter-arrivals.
-    \item Next: construct Poisson processes and simulate queues.
+    \item One graded end-of-session MCQ in each of sessions 1--6, scored out of 20. An absence scores zero; session 7 has no CC quiz.
+    \item Drop the \emph{single lowest} score---your one free card. Average the other five for continuous control (CC), on the /20 scale.
   \end{itemize}
-  \vspace{1em}
-  \textit{"When data meets time, and time meets uncertainty — we need more than ML."}
+  \[
+    \mathrm{CC}=\frac{\text{sum of six scores}-\text{lowest score}}{5}
+  \]
+  \vspace{-0.8em}
+  \[
+    \mathrm{Final}=\max\!\left(E,\;\frac{E+\mathrm{CC}}{2}\right)
+  \]
+  \vspace{0.2em}
+  \small
+  Example: $0,10,12,14,16,18$ $\rightarrow$ drop $0$, so $\mathrm{CC}=14$.
+  If exam mark $E=12$, the final mark is $\max(12,13)=13$.
+\end{frame}
+
+\begin{frame}{Today's three-hour route}
+  \small
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{8cm}@{}}
+    0--40 min & Screen-free motivation, data meaning and paper diagnostic.\\[0.35em]
+    40--90 min & On your computer: load, summarize and model the extract.\\[0.35em]
+    90--100 min & Break.\\[0.35em]
+    100--170 min & On your computer: simulate, validate, decide and check an LLM claim.\\[0.35em]
+    170--180 min & Screen-free printed quiz and one open question.\\
+  \end{tabular}
+  \vspace{0.8em}
+  \textbf{Output:} a reproducible analysis and one model limitation.
+\end{frame}
+
+\begin{frame}{Opening diagnostic: on paper, ungraded}
+  \small
+  Start with $[0,1,3,1,0,5]$. Mark each answer \emph{sure}, \emph{unsure} or \emph{guess}.
+  \begin{enumerate}
+    \item \textbf{Python:} CSV values are strings. How do you convert \texttt{entries} and count intervals with at least three entries?
+    \item \textbf{Expected versus exact:} If the model mean is two, does seeing five once disprove it?
+    \item \textbf{Variability:} $[2,2,2,2]$ and $[0,0,4,4]$ have the same mean. Which varies more?
+    \item \textbf{Staffing:} What evidence beyond these arrival counts would let us judge another agent?
+  \end{enumerate}
+  \vspace{0.4em}
+  Keep devices closed. The answers set today's pace.
+\end{frame}
+
+\section{Observe}
+
+\begin{frame}{The November 1999 extract: what is counted?}
+  \begin{itemize}
+    \item File: \texttt{data/anonymousbank\_nov1999\_arrivals\_15min.csv}
+    \item One row per date and 15-minute interval: \texttt{date, time, entries}.
+    \item Example: \texttt{1999-11-01,10:00,49} means 49 counted VRU entries in $[10{:}00,10{:}15)$.
+    \item 2,880 intervals across 30 days; 40,722 non-\texttt{PHANTOM} \emph{VRU entries} in total.
+    \item The extract includes \texttt{AGENT} and \texttt{HANG} outcomes. A VRU entry is \textbf{not} necessarily a request for an agent.
+  \end{itemize}
+  \vspace{0.5em}
+  \footnotesize
+  Source: \href{https://seelab.net.technion.ac.il/data/}{Technion SEE Lab, AnonymousBank}.
+  Context: \href{https://doi.org/10.1198/016214504000001808}{Brown et al., \emph{JASA} 100 (2005), 36--50}.
+\end{frame}
+
+\begin{frame}[fragile]{Load and check the extract}
+  \small
+\begin{verbatim}
+import csv
+from pathlib import Path
+filename = "anonymousbank_nov1999_arrivals_15min.csv"
+path = Path("data") / filename
+with path.open(newline="") as source:
+    rows = list(csv.DictReader(source))
+observed = [int(row["entries"]) for row in rows]
+assert len(rows) == 2880 and sum(observed) == 40722
+\end{verbatim}
+  \vspace{0.3em}
+  \begin{itemize}
+    \item Run from the repository root; the notebook also handles launch from \texttt{notebooks/}.
+    \item Check duplicate date--time pairs, negative counts and all 96 slots per day.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Observed mean entries by clock hour}
+  \centering
+  \begin{tikzpicture}[x=0.37cm,y=0.105cm]
+    \draw[->] (0,0)--(24,0) node[right,font=\scriptsize] {hour};
+    \draw[->] (0,0)--(0,36) node[above,font=\scriptsize,align=center] {mean per\\15-min bin};
+    \foreach \y in {10,20,30} {
+      \draw[gray!35] (0,\y)--(23.2,\y);
+      \node[left,font=\scriptsize] at (0,\y) {\y};
+    }
+    \foreach \x in {0,6,12,18,23} {
+      \draw (\x,0)--(\x,-0.8);
+      \node[below,font=\scriptsize] at (\x,-0.8) {\x};
+    }
+    \draw[very thick,blue]
+      plot coordinates {(0,1.1) (1,0.4) (2,0.3) (3,0.1) (4,0.2) (5,0.3)
+      (6,1.3) (7,8.1) (8,17.3) (9,30.7) (10,32.3) (11,27.0)
+      (12,23.7) (13,23.5) (14,25.2) (15,26.1) (16,20.7) (17,16.0)
+      (18,16.5) (19,16.4) (20,13.8) (21,14.7) (22,13.9) (23,9.8)};
+  \end{tikzpicture}
+  \vspace{0.4em}
+
+  \small Each point averages four 15-minute slots over all 30 November days.\par
+  \textbf{Discuss:} Is one constant rate credible for the whole day?
+\end{frame}
+
+\section{Model and simulate}
+
+\begin{frame}{First model: one arrival rate for the whole month}
+  Assume a constant rate $r$ VRU entries per minute. For each 15-minute count $X_i$:
+  \begin{gather*}
+    X_i\sim\operatorname{Poisson}(15r),\qquad
+    \mathbb E[X_i]=\operatorname{Var}(X_i)=15r,\\
+    \mathbb P(X_i=0)=e^{-15r}.
+  \end{gather*}
+  \begin{itemize}
+    \item The homogeneous Poisson process also assumes independent counts in disjoint intervals.
+    \item Fit $r$ from the pooled mean: $\hat r=14.14/15\approx0.943$ entries per minute.
+    \item Nights and busy hours are deliberately pooled. This is a baseline to test, not an endorsed staffing model.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The pooled baseline fails two checks}
+  \small
+  \begin{tabular}{@{}lcc@{}}
+    & \textbf{Observed} & \textbf{Constant-rate model}\\[0.35em]
+    Mean count & 14.14 & 14.14 (fitted)\\[0.35em]
+    Variance of counts & 209.30 & 14.14\\[0.35em]
+    Empty-bin fraction & 29.1\% & $e^{-14.14}\approx7.2\times10^{-7}$\\
+  \end{tabular}
+  \vspace{0.7em}
+  \begin{itemize}
+    \item The observed variance uses divisor $n$ (Python \texttt{statistics.pvariance}).
+    \item The pooled model predicts almost no empty bins; the extract has many.
+    \item This challenges a \emph{constant} rate. We must inspect when the empty bins occur.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Simulate arrivals with plain Python}
+  \small
+\begin{verbatim}
+import random, statistics
+rate = statistics.mean(observed) / 15  # per minute
+rng = random.Random(2026)
+simulated = [0] * len(observed)
+clock = rng.expovariate(rate)
+while clock < 15 * len(observed):
+    simulated[int(clock // 15)] += 1
+    clock += rng.expovariate(rate)
+\end{verbatim}
+  \vspace{0.2em}
+  Each exponential gap moves the clock to the next arrival. The notebook wraps this in a reusable function with input checks.
+\end{frame}
+
+\begin{frame}{Check the simulator; then check the model}
+  \begin{itemize}
+    \item With a few different seeds, simulated mean counts should stay near 14.14.
+    \item The simulated variance/mean ratio should be near 1, not exactly 1 in every run.
+    \item Simulated empty-bin share should be near $e^{-14.14}$; the observed share is 29.1\%.
+  \end{itemize}
+  \vspace{0.6em}
+  \textbf{Do not tune the seed to make the simulation resemble the data.} This is a test of the constant-rate assumption, not a search for a lucky run.
+\end{frame}
+
+\begin{frame}{Validate by clock hour, then propose a next test}
+  \begin{itemize}
+    \item The homogeneous model expects about 14.14 entries per 15-minute bin at \emph{every} clock hour.
+    \item Observed means: about 0.1 at 03:00 and 32.3 at 10:00, across all November days.
+    \item Find where the notebook's simulated hourly profile overpredicts and underpredicts the data.
+  \end{itemize}
+  \vspace{0.5em}
+  \textbf{Next test:} estimate separate rates for comparable time slots and day types; reserve later days to check them. A better hourly profile alone would not prove independent Poisson arrivals.
+\end{frame}
+
+\begin{frame}{What can we decide today?}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Supported now}
+      \begin{itemize}
+        \item Describe when VRU entries occur.
+        \item Test a simple model for entry counts.
+        \item Decide which assumption needs a better check.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Needed for staffing}
+      \begin{itemize}
+        \item Agent-directed arrivals and routing.
+        \item Service durations and staffing schedules.
+        \item Waiting, abandonment and model validation.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.7em}
+  \textbf{Decision for week 1:} identify the missing observations before judging whether another agent would help.
+\end{frame}
+
+\section{Verification and exit check}
+
+\begin{frame}{Use an LLM to check a theoretical claim}
+  Ask an LLM:
+  \begin{quote}
+    ``If counts in periods A and B are each Poisson, is a count from a randomly selected period Poisson with their average rate? Prove or disprove it. Distinguish selection from addition.''
+  \end{quote}
+  \begin{enumerate}
+    \item Use a fair coin to select A or B, with $A\sim\operatorname{Poi}(1)$ and $B\sim\operatorname{Poi}(3)$.
+    \item Check the selected count's mean and variance yourself. Compare with $\operatorname{Poi}(2)$.
+    \item State separately what happens if independent counts $A$ and $B$ are \emph{added}.
+  \end{enumerate}
+  \vspace{0.3em}
+  \footnotesize Record the LLM claim, its assumptions, your independent check and any correction. Use no raw call records in the prompt.
+\end{frame}
+
+\begin{frame}{End-of-session participation check}
+  \Large In the final 10 minutes, complete the printed six-question exit quiz handed out in class.\normalsize
+  \vspace{0.8em}
+  \begin{itemize}
+    \item Work individually, without devices or LLMs.
+    \item Choose one answer per question.
+    \item Give one question about the data or model that you still have.
+    \item Hand it in before the group discussion.
+  \end{itemize}
+  \vspace{0.5em}
+  The quiz checks measurement, a basic Python conversion, variability and independent LLM verification.
+\end{frame}
+
+\begin{frame}{What we can take forward}
+  \begin{itemize}
+    \item The bank extract gives a real arrival pattern, with important limits on what it measures.
+    \item A simple Poisson model is a useful starting point only when its rate and independence assumptions are stated and checked.
+    \item Simulation creates a testable prediction; observed counts show where the homogeneous baseline fails.
+    \item A staffing recommendation needs queue, service and abandonment evidence too.
+  \end{itemize}
+  \vspace{0.5em}
+  \footnotesize Sources: \href{https://seelab.net.technion.ac.il/data/}{Technion SEE Lab, AnonymousBank data repository};
+  \href{https://doi.org/10.1198/016214504000001808}{Brown et al., ``Statistical Analysis of a Telephone Call Center,'' \emph{JASA} 100 (2005), 36--50}.
 \end{frame}
 
 \end{document}

@@ -21,3 +21,24 @@
 # Backup files
 *~
 *.bak
+
+# Private student records and grading work. Never commit these files.
+/students/
+/instructor/
+/week01/exit_quiz*
+/data/raw/
+/data/private/
+
+# Legacy locations, in case a local grading script recreates them.
+/submissions/
+/feedback/
+/copies examen/
+/notes_renfort_info_2_2025_2026.csv
+/auto_grade.py
+/grading_prompt.md
+
+# Local editor and notebook artifacts
+.DS_Store
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
