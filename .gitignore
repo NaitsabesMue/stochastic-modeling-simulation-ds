@@ -24,6 +24,8 @@
 
 # Private student records and grading work. Never commit these files.
 /students/
+/instructor/
+/week01/exit_quiz*
 /data/raw/
 /data/private/
 
@@ -38,3 +40,5 @@
 # Local editor and notebook artifacts
 .DS_Store
 .ipynb_checkpoints/
+__pycache__/
+*.pyc
