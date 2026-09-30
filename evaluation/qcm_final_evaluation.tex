@@ -1,0 +1,150 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath,amssymb}
+
+\title{QCM -- Stochastic Models and Simulation}
+\author{M2 Data Science}
+\date{}
+
+\begin{document}
+\maketitle
+
+\noindent\textbf{Instructions}
+\begin{itemize}
+  \item Several answers may be correct for each question.
+  \item Tick \textbf{all} correct answers; a partially correct selection (missing a correct option or ticking a wrong one) is marked incorrect.
+  \item Duration: \textbf{20 minutes}.
+\end{itemize}
+
+\bigskip
+
+\begin{enumerate}
+\item \textbf{Poisson process and thinning.} For a homogeneous Poisson process with rate $\lambda$ on $[0,T]$:
+  \begin{enumerate}
+    \item The number of arrivals $N(T)$ is Poisson with mean $\lambda T$.
+    \item Conditionally on $N(T)=n$, the $n$ arrival times are i.i.d.\ $\mathrm{Unif}(0,T)$.
+    \item Thinning with independent Bernoulli$(p)$ marks produces a Poisson process of rate $\lambda p$.
+    \item Superposition of independent Poisson processes with rates $\lambda_1,\lambda_2,\dots$ is not Poisson in general.
+    \item Inter-arrival times are i.i.d.\ exponential with mean $\lambda$.
+  \end{enumerate}
+
+\item \textbf{Little’s Law and stability.} Consider a single-station queue observed in steady state.
+  \begin{enumerate}
+    \item Little’s Law $L=\lambda W$ holds only for $M/M/1$ queues.
+    \item In any stable system, the long-run throughput always equals the \emph{external} arrival rate, even when there is blocking or abandonment.
+    \item If $\lambda \ge c\mu$ in an $M/M/c$, the system is unstable (no finite steady-state mean).
+    \item $L_q = \lambda W_q$ is valid even when service times are non-exponential, provided the system is stable.
+    \item Little’s Law cannot be used to validate or cross-check simulation estimates because it is purely theoretical.
+  \end{enumerate}
+
+\item \textbf{$M/M/1$ intuitions and sensitivity.} For an $M/M/1$ queue with arrival rate $\lambda$ and service rate $\mu$:
+  \begin{enumerate}
+    \item $\rho = \lambda/\mu$ is the utilisation and must satisfy $\rho < 1$ for a stable steady state.
+    \item As $\rho \to 1$, the mean waiting time $W_q$ grows approximately like $1/(1-\rho)$.
+    \item Small relative errors in $\lambda$ or $\mu$ near $\rho \approx 1$ do not significantly affect $W_q$.
+    \item When $\rho$ is small (e.g.\ $\rho=0.2$), $W_q$ is highly sensitive to small changes in $\lambda$.
+    \item The stationary distribution of $N$ (number in system) is Poisson with mean $\rho$.
+  \end{enumerate}
+
+\item \textbf{$M/M/c$ and Erlang-C.} For an $M/M/c$ queue (Poisson arrivals, $c$ exponential servers, infinite buffer):
+  \begin{enumerate}
+    \item The offered load is defined as $a := \lambda/(c\mu)$, which equals the utilisation $\rho$.
+    \item The Erlang-C formula gives the probability that an arrival has to wait.
+    \item If $\rho$ is fixed and $c \to \infty$, the waiting probability always goes to $1$.
+    \item For fixed $\lambda,\mu$, adding servers (increasing $c$) always decreases $W_q$ with roughly linear (non-diminishing) improvement.
+    \item The birth--death structure uses $\lambda_n=\lambda$ and $\mu_n = \min(n,c)\mu$.
+  \end{enumerate}
+
+\item \textbf{CLT-based confidence intervals for simulation output.} You simulate $R$ independent replications of a performance metric $X$ (e.g.\ mean waiting time) and obtain sample mean $\bar X$ and sample standard deviation $s$.
+  \begin{enumerate}
+    \item A $95\%$ CI can be approximated by $\bar X \pm 1.96\,s/\sqrt{R}$ when $R$ is not too small.
+    \item Increasing $R$ shrinks the CI width roughly like $1/\sqrt{R}$.
+    \item Autocorrelation within each replication makes it impossible to apply the CLT and construct meaningful CIs.
+    \item If you use common random numbers across configurations, you cannot construct valid CIs.
+    \item When the distribution of $X$ is heavy-tailed, CLT-based CIs converge just as fast as in the Gaussian case and require no extra caution.
+  \end{enumerate}
+
+\item \textbf{Variance reduction and experiment design.} Consider Monte Carlo or queueing simulation experiments.
+  \begin{enumerate}
+    \item Antithetic variates use positively correlated samples (e.g.\ $U$ and $U'$) to reduce variance.
+    \item Control variates exploit a correlated quantity with known expectation to reduce estimator variance.
+    \item Using the same random number seeds for two competing system designs can reduce the variance of their \emph{difference}.
+    \item Discarding a warm-up period has no real impact on bias in steady-state estimates.
+    \item Stratified sampling is useless in simulation and should be avoided.
+  \end{enumerate}
+
+\item \textbf{Parameter estimation from event data.} You observe events from a Poisson process and an $M/M/1$ queue.
+  \begin{enumerate}
+    \item For a homogeneous Poisson process observed on $[0,T]$, the MLE for $\lambda$ is $\hat\lambda = N(T)/T$.
+    \item In an $M/M/1$ with observed busy time $B(T)$ and completions $C(T)$, $\hat\mu = B(T)/C(T)$ is a natural estimator of $\mu$.
+    \item If you only observe the aggregate count $N(T)$, you cannot consistently estimate $\lambda$.
+    \item For $M/G/1$, estimating $\lambda$ and the first two moments of service times is enough to plug into the Pollaczek--Khinchine formula.
+    \item Fisher information is only relevant for Bayesian estimators and does not help quantify precision for MLEs.
+  \end{enumerate}
+
+\item \textbf{Diagnosing and fitting from an $M/G/c$ log.} You are given an event log with \texttt{arrival\_time}, \texttt{start\_service\_time}, \texttt{completion\_time}, \texttt{service\_time}, \texttt{wait\_time}, \texttt{system\_time}, and \texttt{queue\_len\_at\_arrival} for a multi-server system.
+  \begin{enumerate}
+    \item By examining overlaps between \texttt{start\_service\_time} and \texttt{completion\_time}, you can infer the maximum observed number of simultaneous services and thus a lower bound on $c$.
+    \item A histogram of inter-arrival times plus overdispersion of counts can reveal deviations from a homogeneous Poisson arrival process.
+    \item A log-survival plot of \texttt{service\_time} can indicate a shifted exponential structure (flat region then exponential tail).
+    \item If you see many arrivals with \texttt{queue\_len\_at\_arrival = 0}, the system must have only one server.
+    \item If the fitted model consistently underestimates empirical waiting times, it means the model is overfitting noise and is therefore preferable.
+  \end{enumerate}
+
+\item \textbf{Model selection and structural assumptions.} You have a system where customers arrive roughly at rate $\lambda$ and are processed by several servers; some customers abandon the queue when waiting too long. You fit a simple $G/G/c$ model \emph{without} abandonment based only on completed jobs.
+  \begin{enumerate}
+    \item Using completions only to estimate $\lambda$ will generally underestimate the true arrival rate.
+    \item Ignoring abandonment tends to make the system appear \emph{more} congested than it really is for arrivals.
+    \item A no-abandonment model fitted on completions may still match the observed waiting times of served customers while completely missing the cost of lost customers.
+    \item If the fitted no-abandonment model reproduces the empirical mean wait of served customers, then it is safe to use it for staffing decisions.
+    \item A key diagnostic is to look for timeouts/reneging patterns (e.g.\ maximum observed waits, censored records) and decide whether a no-abandonment model is structurally acceptable.
+  \end{enumerate}
+
+\item \textbf{Designing robust simulation studies.} You need to compare two staffing policies for a queueing system using simulation, and report a recommendation with uncertainty.
+  \begin{enumerate}
+    \item Using different warm-up lengths and run lengths for each policy makes comparisons fairer.
+    \item Common random numbers across policies reduce variance of the \emph{difference} in performance, making it easier to detect meaningful improvements.
+    \item When utilisation is very high ($\rho$ close to $1$), you should run shorter simulations because queues explode and CLT approximations become unreliable.
+    \item A good practice is to report both point estimates and CIs for key metrics, and to highlight when CIs for competing policies overlap strongly.
+    \item If a small change in the fitted service-time distribution (e.g.\ slightly heavier tail) flips the ranking of policies, this indicates the decision is \emph{not} robust and should be reported as such.
+  \end{enumerate}
+
+\end{enumerate}
+
+\newpage
+\section*{Correction (do not distribute during exam)}
+
+\begin{itemize}
+  \item Q1: a, b, c
+  \item Q2: c, d
+  \item Q3: a, b
+  \item Q4: b, e
+  \item Q5: a, b
+  \item Q6: b, c
+  \item Q7: a, d
+  \item Q8: a, b, c
+  \item Q9: a, c, e
+  \item Q10: b, d, e
+\end{itemize}
+
+\bigskip
+\noindent\textbf{Scoring rule (out of 5 points)}
+\begin{itemize}
+  \item For each of the 50 statements (10 questions $\times$ 5 options):
+    \begin{itemize}
+      \item If the statement is \emph{true} and the student ticks it: $+1$ point.
+      \item If the statement is \emph{true} and the student does \emph{not} tick it: $-1$ point.
+      \item If the statement is \emph{false} and the student does \emph{not} tick it: $+1$ point.
+      \item If the statement is \emph{false} and the student ticks it: $-1$ point.
+    \end{itemize}
+  \item Let $S$ be the total over the 50 decisions ($S\in[-50,50]$). The QCM mark on 5 points is
+  \[
+    \text{QCM\_score} \;=\; \max\bigl(0,\; \min\bigl(5,\; S/10\bigr)\bigr).
+  \]
+  Thus a random paper has expected score close to $0$, and only clearly better-than-random performance yields positive points.
+\end{itemize}
+
+\end{document}

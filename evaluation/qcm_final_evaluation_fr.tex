@@ -1,0 +1,158 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath,amssymb}
+\renewcommand{\labelenumii}{\makebox[2em][l]{$\square$\,\alph{enumii})}}
+
+\title{QCM -- Modèles stochastiques et simulation}
+\author{M2 Data Science}
+\date{}
+
+\begin{document}
+\maketitle
+
+\vspace*{1em}
+\noindent\textbf{Nom et prénom de l'étudiant(e) :} \rule{0.6\textwidth}{0.4pt}
+
+\noindent\textbf{Consignes}
+\begin{itemize}
+  \item Plusieurs réponses peuvent être correctes pour chaque question.
+  \item Cochez \textbf{toutes} les réponses correctes. Si vous cochez une réponse fausse ou si vous oubliez une réponse vraie, la question est comptée comme \emph{fausse}.
+  \item Barème : pour chaque proposition, une bonne décision (cocher une proposition vraie ou ne pas cocher une proposition fausse) vaut $+1$ point, une mauvaise décision vaut $-1$ point. La note finale sur 5 est obtenue en ramenant la somme totale dans l'intervalle $[0,5]$ (une copie aléatoire aura typiquement une note proche de 0).
+  \item Durée : \textbf{20 minutes}.
+\end{itemize}
+
+\bigskip
+
+\begin{enumerate}
+\item \textbf{Processus de Poisson et thinning.} Pour un processus de Poisson homogène de taux $\lambda$ sur $[0,T]$ :
+  \begin{enumerate}
+    \item Le nombre d'arrivées $N(T)$ suit une loi de Poisson de moyenne $\lambda T$.
+    \item Conditionnellement à $N(T)=n$, les $n$ instants d'arrivée sont i.i.d.\ $\mathrm{Unif}(0,T)$.
+    \item Un thinning par marquage Bernoulli$(p)$ indépendant produit un processus de Poisson de taux $\lambda p$.
+    \item La superposition de processus de Poisson indépendants de taux $\lambda_1,\lambda_2,\dots$ n'est en général pas un processus de Poisson.
+    \item Les temps inter-arrivées sont i.i.d.\ exponentiels de moyenne $\lambda$.
+  \end{enumerate}
+
+\item \textbf{Loi de Little et stabilité.} On considère un système de file d'attente à une station observé en régime stationnaire.
+  \begin{enumerate}
+    \item La loi de Little $L=\lambda W$ ne vaut que pour les files $M/M/1$.
+    \item Dans tout système stable, le débit de sortie à long terme est toujours égal au taux d'arrivée \emph{externe}, même s'il y a blocage ou abandon.
+    \item Si $\lambda \ge c\mu$ dans un $M/M/c$, le système est instable (pas de moyenne stationnaire finie).
+    \item $L_q = \lambda W_q$ reste valable même si les temps de service ne sont pas exponentiels, tant que le système est stable.
+    \item La loi de Little ne peut pas être utilisée pour valider ou recouper des résultats de simulation car elle est purement théorique.
+  \end{enumerate}
+
+\item \textbf{Intuitions et sensibilité pour $M/M/1$.} Pour une file $M/M/1$ de taux d'arrivée $\lambda$ et de service $\mu$ :
+  \begin{enumerate}
+    \item $\rho = \lambda/\mu$ est le taux d'occupation et doit vérifier $\rho < 1$ pour un régime stationnaire stable.
+    \item Quand $\rho \to 1$, le temps d'attente moyen $W_q$ croît approximativement comme $1/(1-\rho)$.
+    \item De petites erreurs relatives sur $\lambda$ ou $\mu$ lorsque $\rho \approx 1$ n'affectent pas significativement $W_q$.
+    \item Quand $\rho$ est petit (par ex.\ $\rho = 0{,}2$), $W_q$ est très sensible à de petits changements de $\lambda$.
+    \item La loi stationnaire de $N$ (nombre dans le système) est de Poisson de moyenne $\rho$.
+  \end{enumerate}
+
+\item \textbf{$M/M/c$ et Erlang-C.} Pour une file $M/M/c$ (arrivées de Poisson, $c$ serveurs exponentiels, capacité infinie) :
+  \begin{enumerate}
+    \item La charge offerte est définie par $a := \lambda/(c\mu)$, qui est égale à l'occupation $\rho$.
+    \item La formule d'Erlang-C donne la probabilité qu'une arrivée doive attendre.
+    \item Si $\rho$ est fixé et $c \to \infty$, la probabilité d'attente tend toujours vers $1$.
+    \item Pour $\lambda,\mu$ fixés, ajouter des serveurs (augmenter $c$) fait toujours baisser $W_q$ avec une amélioration grossièrement linéaire (sans rendements décroissants).
+    \item La structure naissance--mort utilise $\lambda_n=\lambda$ et $\mu_n = \min(n,c)\mu$.
+  \end{enumerate}
+
+\item \textbf{IC via TCL pour des sorties de simulation.} On simule $R$ répétitions indépendantes d'une métrique $X$ (par ex.\ temps d'attente moyen) et on obtient la moyenne empirique $\bar X$ et l'écart-type empirique $s$.
+  \begin{enumerate}
+    \item Un IC à $95\%$ peut être approché par $\bar X \pm 1{,}96\,s/\sqrt{R}$ lorsque $R$ n'est pas trop petit.
+    \item Augmenter $R$ réduit la largeur de l'IC approximativement comme $1/\sqrt{R}$.
+    \item L'autocorrélation à l'intérieur de chaque répétition rend impossible l'utilisation du TCL et la construction d'IC interprétables.
+    \item Si l'on utilise des nombres aléatoires communs entre configurations, on ne peut plus construire d'IC valides.
+    \item Quand la loi de $X$ a des queues lourdes, les IC basés sur le TCL convergent tout aussi vite que dans le cas gaussien et ne nécessitent pas de précaution particulière.
+  \end{enumerate}
+
+\item \textbf{Réduction de variance et conception d'expériences.} On considère des expériences de Monte Carlo ou de simulation de files d'attente.
+  \begin{enumerate}
+    \item Les variates antithétiques utilisent des échantillons positivement corrélés (par ex.\ $U$ et $U'$) pour réduire la variance.
+    \item Les variates de contrôle exploitent une quantité corrélée de moyenne connue pour réduire la variance de l'estimateur.
+    \item Réutiliser les mêmes graines aléatoires pour deux politiques concurrentes peut réduire la variance de leur \emph{différence}.
+    \item Écarter une période de chauffe (warm-up) n'a pas d'impact réel sur le biais dans les estimations stationnaires.
+    \item L'échantillonnage stratifié est inutile en simulation et doit être évité.
+  \end{enumerate}
+
+\item \textbf{Estimation de paramètres à partir de données d'événements.} On observe des événements d'un processus de Poisson et d'une file $M/M/1$.
+  \begin{enumerate}
+    \item Pour un processus de Poisson homogène observé sur $[0,T]$, l'EMV pour $\lambda$ est $\hat\lambda = N(T)/T$.
+    \item Dans un $M/M/1$ avec temps d'occupation $B(T)$ observé et nombre de départs $C(T)$, $\hat\mu = B(T)/C(T)$ est un estimateur naturel de $\mu$.
+    \item Si l'on n'observe que le compte agrégé $N(T)$, on ne peut pas estimer $\lambda$ de manière consistante.
+    \item Pour $M/G/1$, estimer $\lambda$ et les deux premiers moments des temps de service suffit pour utiliser la formule de Pollaczek--Khinchine.
+    \item L'information de Fisher n'est pertinente que pour les estimateurs bayésiens et ne permet pas de quantifier la précision d'un EMV.
+  \end{enumerate}
+
+\item \textbf{Diagnostic et ajustement d'un log $M/G/c$.} On dispose d'un log d'événements avec \texttt{arrival\_time}, \texttt{start\_service\_time}, \texttt{completion\_time}, \texttt{service\_time}, \texttt{wait\_time}, \texttt{system\_time} et \texttt{queue\_len\_at\_arrival} pour un système multi-serveurs.
+  \begin{enumerate}
+    \item En examinant les recouvrements entre \texttt{start\_service\_time} et \texttt{completion\_time}, on peut inférer le nombre maximal de services simultanés observés, et donc une borne inférieure sur $c$.
+    \item Un histogramme des temps inter-arrivées et une étude de la sur-dispersion des comptes peuvent révéler des écarts à un processus de Poisson homogène.
+    \item Une courbe de log-survie des \texttt{service\_time} peut indiquer une structure exponentielle décalée (plateau puis queue exponentielle).
+    \item Si l'on observe beaucoup d'arrivées avec \texttt{queue\_len\_at\_arrival = 0}, le système doit nécessairement avoir un seul serveur.
+    \item Si le modèle ajusté sous-estime systématiquement les temps d'attente empiriques, cela signifie qu'il surajuste le bruit et qu'il est donc préférable.
+  \end{enumerate}
+
+\item \textbf{Choix de modèle et hypothèses structurelles.} Les clients arrivent à un taux approximatif $\lambda$ et sont servis par plusieurs serveurs ; certains abandonnent la file s'ils attendent trop longtemps. Vous ajustez un modèle $G/G/c$ simple \emph{sans} abandon, en utilisant uniquement les clients complétés.
+  \begin{enumerate}
+    \item Utiliser seulement les départs pour estimer $\lambda$ conduit en général à sous-estimer le vrai taux d'arrivée.
+    \item Ignorer l'abandon a tendance à faire apparaître le système comme \emph{plus} congestionné qu'il ne l'est réellement du point de vue des arrivées.
+    \item Un modèle sans abandon ajusté sur les clients complétés peut reproduire les temps d'attente observés des clients servis tout en ignorant complètement le coût des clients perdus.
+    \item Si le modèle sans abandon reproduit la moyenne empirique des temps d'attente des clients servis, on peut l'utiliser en toute sécurité pour les décisions de dimensionnement.
+    \item Un diagnostic clé est de chercher des motifs de renoncement / timeouts (par ex .\ temps d'attente maximum, enregistrements censurés) pour juger si un modèle sans abandon est structurellement acceptable.
+  \end{enumerate}
+
+\item \textbf{Conception d'études de simulation robustes.} Vous comparez deux politiques de dimensionnement pour un système de files via simulation, et devez formuler une recommandation avec incertitude.
+  \begin{enumerate}
+    \item Utiliser des durées de warm-up et de simulation différentes pour chaque politique rend la comparaison plus équitable.
+    \item Des nombres aléatoires communs entre politiques réduisent la variance de la \emph{différence} de performance, ce qui facilite la détection d'améliorations significatives.
+    \item Quand le taux d'occupation est très élevé ($\rho$ proche de $1$), il est préférable de faire tourner des simulations plus courtes, car les files explosent et les approximations du TCL deviennent peu fiables.
+    \item Une bonne pratique consiste à rapporter à la fois les estimations ponctuelles et les IC pour les métriques clés, et à signaler quand les IC de politiques concurrentes se recouvrent fortement.
+    \item Si une petite modification de la loi ajustée des temps de service (par ex.\ queue un peu plus lourde) inverse le classement des politiques, cela indique que la décision n'est \emph{pas} robuste et doit être signalé comme tel.
+  \end{enumerate}
+
+\end{enumerate}
+
+\end{document}
+\newpage
+
+
+\section*{Correction (ne pas distribuer pendant l'examen)}
+
+\begin{itemize}
+  \item Q1 : a, b, c
+  \item Q2 : c, d
+  \item Q3 : a, b
+  \item Q4 : b, e
+  \item Q5 : a, b
+  \item Q6 : b, c
+  \item Q7 : a, d
+  \item Q8 : a, b, c
+  \item Q9 : a, c, e
+  \item Q10 : b, d, e
+\end{itemize}
+
+\bigskip
+\noindent\textbf{Règle de notation (sur 5 points)}
+\begin{itemize}
+  \item Pour chacune des 50 propositions (10 questions $\times$ 5 items) :
+    \begin{itemize}
+      \item Si la proposition est \emph{vraie} et l'étudiant la coche : $+1$ point.
+      \item Si la proposition est \emph{vraie} et l'étudiant \emph{ne} la coche \emph{pas} : $-1$ point.
+      \item Si la proposition est \emph{fausse} et l'étudiant ne la coche pas : $+1$ point.
+      \item Si la proposition est \emph{fausse} et l'étudiant la coche : $-1$ point.
+    \end{itemize}
+  \item On note $S$ la somme sur les 50 décisions ($S\in[-50,50]$). La note de QCM sur 5 points est donnée par
+  \[
+    \text{QCM\_score} \;=\; \max\bigl(0,\; \min\bigl(5,\; S/10\bigr)\bigr).
+  \]
+  Ainsi, une copie aléatoire a une note attendue proche de $0$, et seuls les résultats clairement meilleurs que le hasard donnent des points positifs.
+\end{itemize}
+
+\end{document}

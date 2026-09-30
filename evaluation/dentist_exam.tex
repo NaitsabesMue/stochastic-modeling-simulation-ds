@@ -1,0 +1,117 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{amsmath,amssymb}
+
+\title{Final Evaluation -- Dentist Clinic Case Study}
+\author{M2 Data Science -- Stochastic Models and Simulation}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section*{Context}
+
+You are asked to analyse the operation of a small dentist clinic. The clinic has three treatment rooms that can be used in parallel during opening hours (8h per day). Patients arrive over time, register at the front desk, and then wait in a common waiting area until they are called into one of the three rooms.
+
+In the baseline situation there is essentially \emph{one} dentist who moves from room to room. Dental assistants may bring patients into a room and prepare them, but the dentist is the bottleneck resource who performs the actual procedure and rotates between patients. For this exam, the \emph{waiting time} we care about is the time spent in the waiting area \emph{outside} the rooms; once a patient is brought into a room, any additional waiting in the chair is counted as part of the time in the system, not as waiting in queue.
+
+You are given an event log collected over several days, stored in the CSV file:
+\begin{center}
+  \texttt{data/dentist\_priority\_case\_study.csv}
+\end{center}
+Each row corresponds to one patient and contains:
+\begin{itemize}
+  \item \texttt{arrival\_time}: time of arrival at the clinic (in minutes from the start of the observation window),
+  \item \texttt{queue\_len\_at\_arrival}: number of patients already in the system (in service or waiting) just before this arrival,
+  \item \texttt{service\_time}: total time spent in a treatment room (including possible waiting in the chair and treatment),
+  \item \texttt{start\_service\_time}: time when the patient enters a treatment room,
+  \item \texttt{completion\_time}: time when the patient leaves the treatment room,
+  \item \texttt{wait\_time}: $W_q = \text{start\_service\_time} - \text{arrival\_time}$,
+  \item \texttt{system\_time}: $W = \text{completion\_time} - \text{arrival\_time}$,
+  \item \texttt{priority}: a binary indicator recorded by the system.
+\end{itemize}
+
+The clinic is considering whether to \emph{hire additional dentists} (a second or even a third doctor) while keeping the same three rooms. Your task is to build and analyse a stochastic model of the clinic and to use it to inform this decision.
+
+\section*{Tasks}
+
+Work in a notebook of your choice (Python recommended). Your notebook should run from top to bottom and contain all your code, figures, and comments.
+
+\subsection*{1. Data hygiene and basic exploration}
+\begin{itemize}
+  \item Verify basic consistency of the log (non-negative waits, $W \geq \text{service\_time}$, temporal ordering).
+  \item Produce descriptive statistics and plots for inter-arrival times, service times, queue lengths, and waiting times.
+  \item Comment on whether the system appears to operate in a roughly stationary regime during the observation window.
+\end{itemize}
+
+\subsection*{2. Arrival and service models}
+\begin{itemize}
+  \item From the arrival times, assess whether a homogeneous Poisson process is a reasonable model (inter-arrival histogram, overdispersion of counts over fixed windows, time-of-day effects).
+  \item Propose and fit a simple parametric model for service times (e.g.\ shifted exponential or lognormal). Report parameter estimates and at least one measure of uncertainty (CI or standard error).
+  \item Estimate the current utilisation of the clinic under a basic $M/G/c$ or $GI/G/c$ model (state clearly which one you use and why).
+\end{itemize}
+
+\subsection*{3. Queueing structure and hidden features}
+\begin{itemize}
+  \item Using the event log, reconstruct how many treatment rooms are effectively in use (i.e.\ the maximum number of simultaneous services). Compare this to the nominal capacity of three rooms and discuss.
+  \item Explore whether there is evidence of different classes of patients (for example using the \texttt{priority} field): do some patients systematically wait less or skip ahead of others? Provide plots or summary statistics to support your conclusion.
+  \item Based on your findings, propose a queueing model that captures the essential structure of the clinic (number of servers, service-time distribution, possible priority rules).
+\end{itemize}
+
+\subsection*{4. Simulation model and validation}
+\begin{itemize}
+  \item Implement a discrete-event simulation of your proposed model in Python (you may reuse patterns from the course notebooks; SimPy is allowed but not required). Your model should reflect that there are three treatment rooms but, in the baseline, effectively one dentist rotating between them.
+  \item Calibrate the model using your fitted parameters and simulate the current configuration (baseline number of dentists) long enough to approximate steady state.
+  \item For the baseline configuration, estimate at least:
+    \begin{itemize}
+      \item mean waiting time $W_q$,
+      \item mean number of patients in queue $L_q$,
+      \item utilisation of the dentist(s),
+      \item any service-level metric you find relevant (e.g.\ $\mathbb P(W_q > 10\text{ minutes})$).
+    \end{itemize}
+  \item Construct confidence intervals for one or two key performance metrics using independent replications. Compare simulated metrics to empirical ones from the log and discuss the quality of fit.
+\end{itemize}
+
+\subsection*{5. Hiring decision and demand feedback}
+
+The clinic manager is considering hiring a \emph{second} and possibly a \emph{third} dentist. At the same time, she believes that offering \emph{short waiting times in the waiting area} will attract more patients:
+\begin{quote}
+``If we can keep the mean waiting time in the waiting room around 5 minutes, word-of-mouth will increase demand by about $20\%$ (arrival rate multiplied by $1.2$).''
+\end{quote}
+
+\begin{itemize}
+  \item Propose a simple cost model including at least:
+    \begin{itemize}
+      \item a fixed base cost for running the clinic per unit time,
+      \item a cost per dentist per unit time (salary),
+      \item optionally, a cost related to patient waiting or lost business.
+    \end{itemize}
+    You may either use reasonable numerical values of your choice, or state them symbolically and interpret results qualitatively.
+  \item Using your simulation model, compare:
+    \begin{itemize}
+      \item the current configuration (baseline number of dentists, current estimated arrival rate),
+      \item an expanded configuration with a second dentist under an increased arrival rate, e.g.\ $1.2\,\hat\lambda$ if the target mean waiting time is met,
+      \item optionally, a configuration with three dentists to explore further capacity expansion.
+    \end{itemize}
+  \item For each configuration, estimate total cost per unit time under your model, with confidence intervals if possible.
+  \item Based on your analysis, discuss whether hiring a fourth dentist appears profitable or justified, and under which assumptions. Highlight the most important sources of uncertainty or model risk.
+\end{itemize}
+
+\section*{Deliverables and grading}
+
+\begin{itemize}
+  \item A single notebook that runs from top to bottom in a fresh environment.
+  \item Clear explanations (in markdown) of:
+    \begin{itemize}
+      \item your chosen queueing model and assumptions,
+      \item diagnostic plots and what they show,
+      \item how simulation and confidence intervals were used,
+      \item your cost model and final recommendation.
+    \end{itemize}
+  \item Emphasis is on the coherence of your modelling story and the quality of your analysis, not on guessing hidden parameters exactly.
+\end{itemize}
+
+\end{document}
