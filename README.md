@@ -20,17 +20,17 @@ The course has seven three-hour hands-on sessions and ends in a project. Basic P
 | 6 | Would a proposed change improve the system? | Run and interpret policy experiments. |
 | 7 | What decision can the evidence support? | Present and critique projects. |
 
-Each session begins with a lecture and discussion with **screens closed, phones off, and no side conversations**. Students then work on notebooks and exercises on their own computers. They may discuss the work with their group, but must not copy code or answers. In sessions 1–6, the **last ten minutes** are a printed multiple-choice quiz, completed individually without devices or LLMs. Session 7 ends with the project instead of a continuous-control quiz. Quiz sheets and keys are kept outside Git. Week 1 begins with an **ungraded paper diagnostic** so teaching pace can respond to the class.
+Each session begins with a lecture and discussion with **screens closed, phones off, and no side conversations**. Students then work on notebooks and exercises on their own computers. They may discuss the work with their group, but must not copy code or answers. End-of-session printed multiple-choice quizzes take place in the **last ten minutes**, individually without devices or LLMs. The number and schedule of graded quizzes are **to be confirmed**. Quiz sheets and keys are kept outside Git. Week 1 begins with an **ungraded paper diagnostic** so teaching pace can respond to the class.
 
 ## Assessment
 
-There is one graded multiple-choice quiz at the end of each of the first **six** sessions. An absence gives a score of **0** for that quiz. Each student has one “free card”: the **single lowest** quiz score is removed, whether it came from an absence or a completed quiz. Continuous control (`CC`) is the average of the other **five** scores. All quiz and exam scores are out of 20.
+The number of graded multiple-choice quizzes is **to be confirmed**. Let `N` be the total number scheduled for the class, including any a student misses. An absence gives a score of **0**. Each student has one “free card”: remove the **single lowest** score, whether from an absence or a completed quiz, and average the remaining `N − 1` scores to obtain continuous control (`CC`). Quiz scores are recorded out of 20. Within a quiz, a correct answer earns +1, an incorrect answer earns −1, a blank earns 0, and the written response can earn up to 2 bonus points; scores are bounded between 0 and 20.
 
-`CC = (q₁ + q₂ + q₃ + q₄ + q₅ + q₆ − lowest quiz score) / 5`
+`CC = (sum of all N scores − lowest score) / (N − 1)`
 
 `Final mark = (Exam + CC) / 2`
 
-For example, quiz scores of `0, 12, 13, 14, 15, 16` give `CC = 14` after dropping the zero. With `Exam = 12`, the final mark is `13`. If a student misses two quizzes, only one zero is removed. The Week 1 entrance diagnostic does not count toward `CC`.
+For illustration, if there were six quizzes, scores of `0, 10, 12, 14, 16, 18` give `CC = 14` after dropping the zero. With `Exam = 12`, the final mark is `13`. If a student misses two quizzes, only one zero is removed. The Week 1 entrance diagnostic does not count toward `CC`.
 
 ## Week 1 materials
 
@@ -41,7 +41,9 @@ For example, quiz scores of `0, 12, 13, 14, 15, 16` give `CC = 14` after droppin
 
 The lab uses a non-identifying 15-minute arrival-count extract from the [Technion SEE Lab AnonymousBank data](https://seelab.net.technion.ac.il/data/). It contains November 1999 VRU-entry counts and excludes source-marked `PHANTOM` records. These are entries to the phone system, **not** arrivals to an agent queue. The original archive and row-level records remain outside Git. The source asks users to notify Prof. Avi Mandelbaum or the SEE team and acknowledge the data; see [data notes](data/README.md) before using it in class.
 
-Open the lab in Jupyter or VS Code with a Python 3 kernel. Its code uses the Python standard library, and the included aggregate CSV is enough for week 1. No SimPy installation or raw-data download is needed to run it.
+The lab follows the lecture: inspect the 96 unaveraged counts from 1 November, recall the Poisson process, fit one baseline rate to all 2,880 November intervals, check the simulator against theoretical predictions, then compare with the observed data. Time-of-day variation comes first; differences between weekdays are a further check requiring multiple days.
+
+Save your completed notebook and notes under ignored `students/`; never commit or push student work. Start Jupyter from the repository root when running that copy so the loader finds the data. Open the lab in Jupyter or VS Code with a Python 3 kernel. Its code uses the Python standard library, and the included aggregate CSV is enough for week 1. No SimPy installation or raw-data download is needed to run it.
 
 ## Private material
 

@@ -15,12 +15,12 @@ The repository permits free academic use and asks users to notify Prof. Avi Mand
 ```mermaid
 flowchart LR
     A[Call enters the phone system] --> V[VRU: automated menu, identification and self-service]
-    V -->|leaves before agent service| H[HANG]
+    V -->|leaves before agent service| H[outcome = HANG]
     V -->|requests agent and one is free| S[Agent service]
     V -->|requests agent and must wait| Q[Queue / on hold]
     Q -->|leaves while waiting| H
     Q --> S
-    S --> G[AGENT]
+    S --> G[outcome = AGENT]
 ```
 
 **VRU** means **Voice Response Unit**, also called an interactive voice response system (IVR). It is the automated system a caller reaches first. It can identify a customer, present menus, provide self-service information, or route the call toward a human agent.
@@ -104,6 +104,14 @@ date,time,entries
 This means that 49 retained calls entered the **VRU** between 10:00:00 and 10:14:59 on 1 November 1999. It does **not** mean that 49 callers joined the agent queue, that 49 callers were waiting at 10:00, or that 49 callers received service.
 
 The extract includes both `AGENT` and `HANG` outcomes and excludes `PHANTOM`. It has 2,880 quarter-hour intervals across 30 days and 40,722 retained entries. Empty intervals appear explicitly with `entries = 0`.
+
+## How the Week 1 displays use these counts
+
+The lecture's daily plot shows the 96 individual CSV counts on **1 November 1999**. Each point is one 15-minute interval; no moving average or averaging across days is applied. The notebook first shows the same counts as a text bar chart.
+
+The first model then uses **all 2,880 November intervals** to estimate one constant rate. This deliberately ignores clock time and date. The later hourly comparison averages the four quarter-hour counts within each clock hour over all 30 dates: 120 counts per displayed mean. Its units remain entries per 15-minute interval.
+
+These views ask two separate questions: does the rate vary within a day, and does the daily pattern differ across dates or weekdays? A single-day plot cannot establish a weekly pattern. The documented normal working days at this centre are Sunday–Thursday, which matters when defining comparable day types.
 
 ## What can and cannot be studied from this extract
 

@@ -3,8 +3,16 @@
 \usetheme{AMU}
 \usepackage{amsmath,amssymb}
 \usepackage{array}
+\usepackage{pgfplots}
+\usepackage{qrcode}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
+\pgfplotsset{compat=1.13}
+
+% Support compilation from either the repository root or the slides directory.
+\IfFileExists{../data/anonymousbank_nov1999_arrivals_15min.csv}
+  {\def\arrivaldatafile{../data/anonymousbank_nov1999_arrivals_15min.csv}}
+  {\def\arrivaldatafile{data/anonymousbank_nov1999_arrivals_15min.csv}}
 
 % Keep both digits of late slide numbers inside the page boundary.
 \setbeamertemplate{footline}{%
@@ -31,16 +39,28 @@
 \section{The question and the method}
 
 \begin{frame}{Why this course? What do you gain?}
-  An operations log shows what happened under one configuration. A decision often concerns a configuration never observed.
-  \vspace{0.5em}
-  \begin{itemize}
-    \item Turn a concrete question, such as adding a bank-call agent, into outcomes and assumptions.
-    \item Build a small Python simulation of a proposed change.
-    \item Quantify simulation uncertainty and find assumptions that fail against real data.
-    \item Communicate a decision, including what the available evidence cannot establish.
-  \end{itemize}
-  \vspace{0.3em}
-  \textbf{Your project:} carry that reasoning from observed data to a defensible recommendation.
+  \centering
+  \begin{tikzpicture}[
+      box/.style={draw,rounded corners,minimum width=3.25cm,minimum height=2.4cm,
+                  text width=2.8cm,align=center,inner sep=0.25cm},
+      question/.style={align=center,text width=2cm,font=\bfseries},
+      every node/.style={font=\small}
+    ]
+    \node[box] (records) {\textbf{Observed system}\\[0.4em]
+      What happened?\\When?\\With how much variation?};
+    \node[question,right=0.4cm of records] (gap) {What if we change\\resources or rules?};
+    \node[box,right=0.4cm of gap] (decision) {\textbf{Proposed system}\\[0.4em]
+      Waiting?\\Throughput?\\Reliability?};
+    \draw[->,thick] (records)--(gap);
+    \draw[->,thick,dashed] (gap)--(decision);
+    \node[below=0.35cm of gap,align=center,text width=3.1cm] {The answer is not in the records.};
+  \end{tikzpicture}
+
+  \vspace{0.7em}
+  \large\textbf{You learn to turn this gap into a defensible decision.}\normalsize
+  \vspace{0.45em}
+
+  \small Define the outcome, expose the assumptions, quantify uncertainty, and explain what the evidence can support.
 \end{frame}
 
 \begin{frame}{A question the existing records cannot answer}
@@ -53,8 +73,6 @@
     \item They contain no observation of the proposed staffing change.
     \item A simulation can explore that change, \emph{if} its assumptions survive comparison with observed behaviour.
   \end{itemize}
-  \vspace{0.4em}
-  \textbf{Today:} start with arrivals. We cannot estimate the effect on waiting from arrival counts alone.
 \end{frame}
 
 \begin{frame}{The course in one loop}
@@ -80,131 +98,304 @@
 
 \begin{frame}{Rules of the game: every three-hour session}
   \begin{enumerate}
-    \item \textbf{First lecture segment:} students keep devices closed. Discuss the question and work short checks on paper.
-    \item \textbf{Notebook and exercises:} open your own computer; use Python, inspect data and record your reasoning.
-    \item \textbf{Final 10 minutes in sessions 1--6:} complete a printed multiple-choice quiz individually, without devices or LLMs.
+    \item \textbf{Lecture segment:} screens closed, phones off, no side conversations.
+    \item \textbf{Notebook and exercises:} open your own computer; use Python and LLMs, inspect data and record your reasoning. Discuss with your group, but do not copy code or answers.
+    \item \textbf{Final 10 minutes:} complete a printed multiple-choice quiz individually, without devices or LLMs.
   \end{enumerate}
-  \vspace{0.5em}
-  Today the opening diagnostic is part of the screen-free segment. Session 7 ends with the project, without a CC quiz.
 \end{frame}
 
-\begin{frame}{Assessment: six paper quizzes}
-  \begin{itemize}
-    \item One graded end-of-session MCQ in each of sessions 1--6, scored out of 20. An absence scores zero; session 7 has no CC quiz.
-    \item Drop the \emph{single lowest} score---your one free card. Average the other five for continuous control (CC), on the /20 scale.
-  \end{itemize}
-  \[
-    \mathrm{CC}=\frac{\text{sum of six scores}-\text{lowest score}}{5}
-  \]
-  \vspace{-0.8em}
-  \[
-    \mathrm{Final}=\max\!\left(E,\;\frac{E+\mathrm{CC}}{2}\right)
-  \]
-  \vspace{0.2em}
-  \small
-  Example: $0,10,12,14,16,18$ $\rightarrow$ drop $0$, so $\mathrm{CC}=14$.
-  If exam mark $E=12$, the final mark is $\max(12,13)=13$.
+\begin{frame}{Working with an LLM: use it or lose it}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{Use it deliberately}
+      \begin{itemize}
+        \item Delegate a precise, well-defined task.
+        \item Ask follow-up questions and request alternatives.
+        \item Use the exchange to dig deeper and increase your understanding.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Stay sceptical}
+      \begin{itemize}
+        \item A one-shot answer may be wrong or merely acceptable.
+        \item Check claims with mathematics, Python or an independent source.
+        \item You own the final reasoning and must be able to explain it.
+      \end{itemize}
+    \end{column}
+  \end{columns}
 \end{frame}
 
-\begin{frame}{Today's three-hour route}
-  \small
-  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{8cm}@{}}
-    0--40 min & Screen-free motivation, data meaning and paper diagnostic.\\[0.35em]
-    40--90 min & On your computer: load, summarize and model the extract.\\[0.35em]
-    90--100 min & Break.\\[0.35em]
-    100--170 min & On your computer: simulate, validate, decide and check an LLM claim.\\[0.35em]
-    170--180 min & Screen-free printed quiz and one open question.\\
-  \end{tabular}
-  \vspace{0.8em}
-  \textbf{Output:} a reproducible analysis and one model limitation.
-\end{frame}
-
-\begin{frame}{Opening diagnostic: on paper, ungraded}
-  \small
-  Start with $[0,1,3,1,0,5]$. Mark each answer \emph{sure}, \emph{unsure} or \emph{guess}.
+\iffalse
+\begin{frame}{Use an LLM to check a theoretical claim}
+  Ask an LLM:
+  \begin{quote}
+    ``If counts in periods A and B are each Poisson, is a count from a randomly selected period Poisson with their average rate? Prove or disprove it. Distinguish selection from addition.''
+  \end{quote}
   \begin{enumerate}
-    \item \textbf{Python:} CSV values are strings. How do you convert \texttt{entries} and count intervals with at least three entries?
-    \item \textbf{Expected versus exact:} If the model mean is two, does seeing five once disprove it?
-    \item \textbf{Variability:} $[2,2,2,2]$ and $[0,0,4,4]$ have the same mean. Which varies more?
-    \item \textbf{Staffing:} What evidence beyond these arrival counts would let us judge another agent?
+    \item Flip a fair coin: on heads observe one count from period A, on tails one count from period B. You observe one count; you do not add both.
+    \item With $A\sim\operatorname{Poi}(1)$ and $B\sim\operatorname{Poi}(3)$, the selected count has $P(X=k)=\tfrac12P(A=k)+\tfrac12P(B=k)$: a mixture.
+    \item Check its mean and variance, then state separately what happens if independent counts $A$ and $B$ are \emph{added}.
   \end{enumerate}
-  \vspace{0.4em}
-  Keep devices closed. The answers set today's pace.
+  \vspace{0.3em}
+  \footnotesize Record the LLM claim, its assumptions, your independent check and any correction. 
+\end{frame}
+\fi
+
+\begin{frame}{Exit Quizz}
+  \Large In the final 10 minutes, complete the printed exit quiz handed out in class.\normalsize
+  \vspace{0.8em}
+  \begin{itemize}
+    \item Work individually, without devices or LLMs.
+    \item Choose one answer per question.
+    \item Give one question about the data or model that you still have.
+  \end{itemize}
+  \vspace{0.5em}
+  The quiz checks basic understanding of the lecture and data used, basic Python commands, variability and independent LLM verification.
+\end{frame}
+
+
+\begin{frame}{Assessment}
+  \begin{itemize}
+    \item Graded end-of-session MCQs are scored out of 20. Their number and schedule are to be confirmed. An absence scores zero.
+    \item Let $N$ be the number of scheduled quizzes, including any missed. Drop the \emph{single lowest} score (one free card):
+  \[
+    \mathrm{CC}=\frac{\text{sum of scores}-\text{lowest score}}{N-1}
+  \]
+  \item Final exam $E$ is scored out of 20. The final mark is the the average of $E$ and CC:
+  \[
+    \mathrm{Final}=\frac{E+\mathrm{CC}}{2}
+  \]
+  \end{itemize}
+  \small
+  Example if $N=6$: $0,10,12,14,16,18$ $\rightarrow$ drop $0$, so $\mathrm{CC}=14$.
+  If exam mark $E=12$, the final mark is $mean(12,14)=13$.
 \end{frame}
 
 \section{Observe}
 
-\begin{frame}{The November 1999 extract: what is counted?}
-  \begin{itemize}
-    \item File: \texttt{data/anonymousbank\_nov1999\_arrivals\_15min.csv}
-    \item One row per date and 15-minute interval: \texttt{date, time, entries}.
-    \item Example: \texttt{1999-11-01,10:00,49} means 49 counted VRU entries in $[10{:}00,10{:}15)$.
-    \item 2,880 intervals across 30 days; 40,722 non-\texttt{PHANTOM} \emph{VRU entries} in total.
-    \item The extract includes \texttt{AGENT} and \texttt{HANG} outcomes. A VRU entry is \textbf{not} necessarily a request for an agent.
-  \end{itemize}
-  \vspace{0.5em}
-  \footnotesize
-  Source: \href{https://seelab.net.technion.ac.il/data/}{Technion SEE Lab, AnonymousBank}.
-  Context: \href{https://doi.org/10.1198/016214504000001808}{Brown et al., \emph{JASA} 100 (2005), 36--50}.
-\end{frame}
-
-\begin{frame}[fragile]{Load and check the extract}
-  \small
-\begin{verbatim}
-import csv
-from pathlib import Path
-filename = "anonymousbank_nov1999_arrivals_15min.csv"
-path = Path("data") / filename
-with path.open(newline="") as source:
-    rows = list(csv.DictReader(source))
-observed = [int(row["entries"]) for row in rows]
-assert len(rows) == 2880 and sum(observed) == 40722
-\end{verbatim}
-  \vspace{0.3em}
-  \begin{itemize}
-    \item Run from the repository root; the notebook also handles launch from \texttt{notebooks/}.
-    \item Check duplicate date--time pairs, negative counts and all 96 slots per day.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Observed mean entries by clock hour}
+\begin{frame}{How one call is recorded}
   \centering
-  \begin{tikzpicture}[x=0.37cm,y=0.105cm]
-    \draw[->] (0,0)--(24,0) node[right,font=\scriptsize] {hour};
-    \draw[->] (0,0)--(0,36) node[above,font=\scriptsize,align=center] {mean per\\15-min bin};
-    \foreach \y in {10,20,30} {
-      \draw[gray!35] (0,\y)--(23.2,\y);
-      \node[left,font=\scriptsize] at (0,\y) {\y};
-    }
-    \foreach \x in {0,6,12,18,23} {
-      \draw (\x,0)--(\x,-0.8);
-      \node[below,font=\scriptsize] at (\x,-0.8) {\x};
-    }
-    \draw[very thick,blue]
-      plot coordinates {(0,1.1) (1,0.4) (2,0.3) (3,0.1) (4,0.2) (5,0.3)
-      (6,1.3) (7,8.1) (8,17.3) (9,30.7) (10,32.3) (11,27.0)
-      (12,23.7) (13,23.5) (14,25.2) (15,26.1) (16,20.7) (17,16.0)
-      (18,16.5) (19,16.4) (20,13.8) (21,14.7) (22,13.9) (23,9.8)};
+  \resizebox{0.94\textwidth}{!}{%
+  \begin{tikzpicture}[
+      stage/.style={draw,rounded corners,align=center,minimum height=1cm,
+                    text width=1.85cm,inner sep=0.12cm,font=\small},
+      outcome/.style={draw,rounded corners,align=center,minimum height=0.85cm,
+                      text width=1.35cm,inner sep=0.12cm,font=\small\bfseries},
+      every edge/.style={draw,->,thick}
+    ]
+    \node[stage] (call) {Call enters\\phone system};
+    \node[stage,right=0.25cm of call] (vru) {\textbf{VRU}\\\texttt{vru\_entry}\\to \texttt{vru\_exit}};
+    \node[stage,right=0.3cm of vru] (queue) {Queue if required\\\texttt{q\_start}\\to \texttt{q\_exit}};
+    \node[stage,right=0.25cm of queue] (service) {Human-agent service\\\texttt{ser\_start}\\to \texttt{ser\_exit}};
+    \node[outcome,below=0.45cm of service] (agent) {\texttt{outcome}\\= AGENT};
+    \node[outcome,below=0.45cm of queue] (hang) {\texttt{outcome}\\= HANG};
+    \path (call) edge (vru);
+    \path (vru) edge (queue);
+    \path (queue) edge (service);
+    \path (service) edge (agent);
+    \path (vru) edge[bend right=20] (hang);
+    \path (queue) edge (hang);
   \end{tikzpicture}
-  \vspace{0.4em}
+  }
 
-  \small Each point averages four 15-minute slots over all 30 November days.\par
-  \textbf{Discuss:} Is one constant rate credible for the whole day?
+  \vspace{0.2em}
+  \footnotesize
+  \begin{itemize}
+    \item The top row contains \textbf{stages and their timestamps}; a call can skip the queue.
+    \item The lower boxes contain one categorical result: \texttt{AGENT} if service occurred, or \texttt{HANG} if the caller left first.
+    \item \texttt{AGENT} is not the employee. The employee name is stored in \texttt{server}; \texttt{PHANTOM} records are discarded.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{From the raw call log to the Week 1 CSV}
+  \centering
+  \resizebox{0.96\textwidth}{!}{%
+  \begin{tikzpicture}[
+      box/.style={draw,rounded corners,align=center,text width=3.1cm,
+                  minimum height=2.2cm,inner sep=0.25cm,font=\small},
+      transformbox/.style={draw,rounded corners,align=center,text width=2.7cm,
+                           minimum height=2.2cm,inner sep=0.25cm,font=\small}
+    ]
+    \node[box] (raw) {\textbf{Private raw file}\\[0.3em]
+      one row per call\\17 fields, including\\all timestamps and identifiers};
+    \node[transformbox,right=0.45cm of raw] (build) {\textbf{Build the extract}\\[0.3em]
+      remove \texttt{PHANTOM}\\group \texttt{vru\_entry}\\into 15-minute intervals};
+    \node[box,right=0.45cm of build] (csv) {\textbf{Public Week 1 CSV}\\[0.3em]
+      one row per interval\\\texttt{date, time, entries}\\no identifiers};
+    \draw[->,thick] (raw)--(build);
+    \draw[->,thick] (build)--(csv);
+  \end{tikzpicture}
+  }
+
+  \vspace{0.65em}
+  \begin{itemize}
+    \item \texttt{entries} counts retained calls by \texttt{vru\_entry}; \texttt{1999-11-01,10:00,49} means 49 calls entered the VRU in $[10{:}00,10{:}15)$.
+    \item The other timestamps---\texttt{vru\_exit}, queue start/exit and service start/exit---remain only in the private raw file. They are \textbf{not} columns of this CSV.
+    \item The aggregate has 2,880 intervals and 40,722 entries. A VRU entry is not necessarily a queue arrival or completed service.
+  \end{itemize}
+
+  \vspace{0.25em}
+  \footnotesize
+  \href{https://github.com/NaitsabesMue/stochastic-modeling-simulation-ds/blob/main/data/anonymousbank_data_guide.md}{Dataset guide: all raw fields, redacted examples, provenance and limitations.}
+\end{frame}
+
+\begin{frame}{The first rows of the Week 1 CSV}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.43\textwidth}
+      \scriptsize
+      \begin{tabular}{@{}lll@{}}
+        \textbf{date} & \textbf{time} & \textbf{entries} \\
+        \hline
+        1999-11-01 & 00:00 & 5 \\
+        1999-11-01 & 00:15 & 2 \\
+        1999-11-01 & 00:30 & 0 \\
+        1999-11-01 & 00:45 & 1 \\
+        1999-11-01 & 01:00 & 0 \\
+        1999-11-01 & 01:15 & 3 \\
+        1999-11-01 & 01:30 & 0 \\
+        1999-11-01 & 01:45 & 0 \\
+      \end{tabular}
+      \vspace{0.6em}
+
+      \normalsize One row represents one 15-minute interval. Zero is an observed count, not a missing value.
+    \end{column}
+    \begin{column}{0.54\textwidth}
+      \centering
+      \resizebox{0.9\linewidth}{!}{%
+      \begin{tikzpicture}[x=0.61cm,y=0.48cm,font=\scriptsize]
+        \draw[->] (-0.55,0) -- (7.75,0) node[right] {time};
+        \draw[->] (-0.5,0) -- (-0.5,5.8) node[above] {entries};
+        \foreach \y in {0,1,2,3,4,5} {
+          \draw (-0.58,\y) -- (-0.43,\y);
+          \node[left] at (-0.62,\y) {\y};
+        }
+        \foreach \x/\h in {0/5,1/2,2/0,3/1,4/0,5/3,6/0,7/0} {
+          \fill[AMU_dk2!75] (\x-0.3,0) rectangle (\x+0.3,\h);
+        }
+        \foreach \x/\lab in {0/{00:00},1/{00:15},2/{00:30},3/{00:45},4/{01:00},5/{01:15},6/{01:30},7/{01:45}} {
+          \node[rotate=50,anchor=east] at (\x,-0.18) {\lab};
+        }
+      \end{tikzpicture}
+      }
+      \vspace{0.4em}
+
+      \small Eight consecutive entry counts from the start of 1 November.
+    \end{column}
+  \end{columns}
+
+  \vspace{0.7em}
+  \textbf{Interpretation:} five retained calls entered the VRU from 00:00 to 00:14:59; this is not the number waiting in a queue.
+\end{frame}
+
+\begin{frame}{Before modelling: verify the input}
+  \centering
+  \resizebox{0.94\textwidth}{!}{%
+  \begin{tikzpicture}[node distance=0.35cm,every node/.style={font=\small}]
+    \node[draw,rounded corners,minimum width=2.1cm,minimum height=0.85cm] (file) {CSV file};
+    \node[draw,rounded corners,minimum width=2.5cm,minimum height=0.85cm,right=of file] (parsed) {Parsed Python values};
+    \node[draw,rounded corners,minimum width=2.4cm,minimum height=0.85cm,right=of parsed] (checked) {Integrity checks pass};
+    \node[draw,rounded corners,minimum width=2.1cm,minimum height=0.85cm,right=of checked] (analyse) {Analyse};
+    \draw[->,thick] (file)--(parsed);
+    \draw[->,thick] (parsed)--(checked);
+    \draw[->,thick] (checked)--(analyse);
+  \end{tikzpicture}
+  }
+
+  \vspace{0.8em}
+  \raggedright
+  \begin{itemize}
+    \item Convert \texttt{entries} from CSV text to integers.
+    \item Verify one row for every expected interval: $30$ days $\times24$ hours $\times4$ quarter-hours $=2{,}880$, with no duplicated or missing date-time pair. Otherwise rates and time profiles would be distorted.
+    \item Verify that every count is nonnegative and that the total is 40,722, as documented by the build process. Otherwise the file or parsing step is wrong.
+  \end{itemize}
+
+  \vspace{0.5em}
+  \textbf{Why?} If a check fails, a later discrepancy may come from the file or our code. These checks validate the input pipeline.
+\end{frame}
+
+\begin{frame}{Observed 15-minute counts on 1 November}
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.96\textwidth,
+      height=5.2cm,
+      xmin=0, xmax=24,
+      ymin=0, ymax=60,
+      xtick={0,3,6,9,12,15,18,21,24},
+      ytick={0,10,20,30,40,50,60},
+      xlabel={clock time on 1 November 1999},
+      ylabel={entries per 15-minute interval},
+      grid=major,
+      grid style={gray!20},
+      tick label style={font=\scriptsize},
+      label style={font=\small},
+      restrict x to domain=0:23.75,
+      unbounded coords=discard
+    ]
+      \addplot[AMU_dk2,very thick,mark=*,mark size=0.8pt]
+        table[x expr=\coordindex/4,y=entries,col sep=comma] {\arrivaldatafile};
+    \end{axis}
+  \end{tikzpicture}
+  \vspace{0.2em}
+
+  \small The 96 points are the 96 CSV rows for this date: no moving average and no averaging across days.\par
+  \textbf{First pattern:} the arrival rate changes during the day. The full month can then reveal a second pattern: whether the same time of day behaves differently on different days or weekdays.
 \end{frame}
 
 \section{Model and simulate}
 
-\begin{frame}{First model: one arrival rate for the whole month}
-  Assume a constant rate $r$ VRU entries per minute. For each 15-minute count $X_i$:
+\begin{frame}{Poisson process: the basic idea}
+  \centering
+  \resizebox{0.94\textwidth}{!}{%
+  \begin{tikzpicture}[x=0.67cm,y=1cm,font=\small]
+    \draw[->,thick] (0,0)--(15.5,0) node[right] {time};
+    \draw (0,0.12)--(0,-0.12) node[below] {0};
+    \draw (15,0.12)--(15,-0.12) node[below] {15 min};
+    \foreach \x in {0.8,2.1,2.8,5.2,7.7,9.1,9.7,12.8,14.2} {
+      \fill[AMU_dk2] (\x,0) circle (2.2pt);
+    }
+    \node[above] at (7.5,0.18) {each dot is one arrival};
+  \end{tikzpicture}
+  }
+
+  \vspace{0.5em}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.50\textwidth}
+      \textbf{Homogeneous-process assumptions}
+      \begin{itemize}
+        \item Arrivals occur at a constant average rate $r$.
+        \item Counts in disjoint intervals are independent.
+        \item In a very short interval, two or more arrivals are negligible.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \small
+      \textbf{Consequences for an interval of length $t$}
+      \begin{align*}
+        N(t)&\sim\operatorname{Poisson}(rt),\\
+        \mathbb E[N(t)]&=\operatorname{Var}(N(t))=rt,\\
+        T_{\mathrm{next}}&\sim\operatorname{Exponential}(r),\\
+        \mathbb E[T_{\mathrm{next}}]&=1/r.
+      \end{align*}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.3em}
+  \small A Poisson \textbf{process} models arrival times. The Poisson \textbf{distribution} describes how many arrivals fall inside a chosen interval.
+\end{frame}
+
+\begin{frame}{First baseline: one rate for every interval}
+  Deliberately ignore clock time and date. Assume the same constant rate $r$ for all 2,880 intervals in November. For each 15-minute count $X_i$:
   \begin{gather*}
     X_i\sim\operatorname{Poisson}(15r),\qquad
     \mathbb E[X_i]=\operatorname{Var}(X_i)=15r,\\
     \mathbb P(X_i=0)=e^{-15r}.
   \end{gather*}
+  \vspace{-0.5cm}
   \begin{itemize}
     \item The homogeneous Poisson process also assumes independent counts in disjoint intervals.
-    \item Fit $r$ from the pooled mean: $\hat r=14.14/15\approx0.943$ entries per minute.
-    \item Nights and busy hours are deliberately pooled. This is a baseline to test, not an endorsed staffing model.
+    \item Fit $r$ from the mean of all 2,880 counts: $\hat r=14.14/15\approx0.943$ entries per minute.
+    \item This deliberately pools nights, busy hours, weekdays and weekends. We use it as a simple baseline whose failures should reveal which variation matters.
   \end{itemize}
 \end{frame}
 
@@ -241,13 +432,23 @@ while clock < 15 * len(observed):
 \end{frame}
 
 \begin{frame}{Check the simulator; then check the model}
-  \begin{itemize}
-    \item With a few different seeds, simulated mean counts should stay near 14.14.
-    \item The simulated variance/mean ratio should be near 1, not exactly 1 in every run.
-    \item Simulated empty-bin share should be near $e^{-14.14}$; the observed share is 29.1\%.
-  \end{itemize}
+  \small
+  One run of the preceding code: 2,880 intervals, seed \texttt{2026}.
+  \vspace{0.5em}
+
+  \begin{tabular}{@{}lrrr@{}}
+    & \textbf{Model prediction} & \textbf{Simulated} & \textbf{Observed}\\[0.35em]
+    Mean count & 14.14 & 14.25 & 14.14\\[0.35em]
+    Variance of counts & 14.14 & 14.52 & 209.30\\[0.35em]
+    Empty intervals & $0.000072\%$ & $0\%$ & $29.1\%$\\
+  \end{tabular}
   \vspace{0.6em}
-  \textbf{Do not tune the seed to make the simulation resemble the data.} This is a test of the constant-rate assumption, not a search for a lucky run.
+  \begin{itemize}
+    \item \textbf{Simulator check:} the simulated mean and variance are close to the theoretical values. This supports the implementation; repeat with other seeds.
+    \item \textbf{Model check:} the observed counts have much greater variance and many more empty intervals. The constant-rate baseline misses this variation.
+  \end{itemize}
+  \vspace{0.3em}
+  Results vary between runs. Choose the seed before comparing results; do not tune it to match the data. Variances above use divisor $n$.
 \end{frame}
 
 \begin{frame}{Validate by clock hour, then propose a next test}
@@ -257,13 +458,13 @@ while clock < 15 * len(observed):
     \item Find where the notebook's simulated hourly profile overpredicts and underpredicts the data.
   \end{itemize}
   \vspace{0.5em}
-  \textbf{Next test:} estimate separate rates for comparable time slots and day types; reserve later days to check them. A better hourly profile alone would not prove independent Poisson arrivals.
+  \textbf{Two sources of variation:} first estimate a rate for each time of day; then check whether those rates also differ between weekdays, weekends or individual dates. Reserve later days to test the fitted rates. A better daily profile alone would not prove independent Poisson arrivals.
 \end{frame}
 
 \begin{frame}{What can we decide today?}
   \begin{columns}[T]
     \begin{column}{0.48\textwidth}
-      \textbf{Supported now}
+      \textbf{Today's goal:} 
       \begin{itemize}
         \item Describe when VRU entries occur.
         \item Test a simple model for entry counts.
@@ -271,7 +472,7 @@ while clock < 15 * len(observed):
       \end{itemize}
     \end{column}
     \begin{column}{0.48\textwidth}
-      \textbf{Needed for staffing}
+      \textbf{Next steps:}
       \begin{itemize}
         \item Agent-directed arrivals and routing.
         \item Service durations and staffing schedules.
@@ -279,49 +480,35 @@ while clock < 15 * len(observed):
       \end{itemize}
     \end{column}
   \end{columns}
-  \vspace{0.7em}
-  \textbf{Decision for week 1:} identify the missing observations before judging whether another agent would help.
 \end{frame}
 
 \section{Verification and exit check}
 
-\begin{frame}{Use an LLM to check a theoretical claim}
-  Ask an LLM:
-  \begin{quote}
-    ``If counts in periods A and B are each Poisson, is a count from a randomly selected period Poisson with their average rate? Prove or disprove it. Distinguish selection from addition.''
-  \end{quote}
-  \begin{enumerate}
-    \item Use a fair coin to select A or B, with $A\sim\operatorname{Poi}(1)$ and $B\sim\operatorname{Poi}(3)$.
-    \item Check the selected count's mean and variance yourself. Compare with $\operatorname{Poi}(2)$.
-    \item State separately what happens if independent counts $A$ and $B$ are \emph{added}.
-  \end{enumerate}
-  \vspace{0.3em}
-  \footnotesize Record the LLM claim, its assumptions, your independent check and any correction. Use no raw call records in the prompt.
-\end{frame}
 
-\begin{frame}{End-of-session participation check}
-  \Large In the final 10 minutes, complete the printed six-question exit quiz handed out in class.\normalsize
-  \vspace{0.8em}
-  \begin{itemize}
-    \item Work individually, without devices or LLMs.
-    \item Choose one answer per question.
-    \item Give one question about the data or model that you still have.
-    \item Hand it in before the group discussion.
-  \end{itemize}
-  \vspace{0.5em}
-  The quiz checks measurement, a basic Python conversion, variability and independent LLM verification.
-\end{frame}
 
-\begin{frame}{What we can take forward}
-  \begin{itemize}
-    \item The bank extract gives a real arrival pattern, with important limits on what it measures.
-    \item A simple Poisson model is a useful starting point only when its rate and independence assumptions are stated and checked.
-    \item Simulation creates a testable prediction; observed counts show where the homogeneous baseline fails.
-    \item A staffing recommendation needs queue, service and abandonment evidence too.
-  \end{itemize}
-  \vspace{0.5em}
-  \footnotesize Sources: \href{https://seelab.net.technion.ac.il/data/}{Technion SEE Lab, AnonymousBank data repository};
-  \href{https://doi.org/10.1198/016214504000001808}{Brown et al., ``Statistical Analysis of a Telephone Call Center,'' \emph{JASA} 100 (2005), 36--50}.
+\begin{frame}{Help improve this course}
+  \begin{columns}[c,onlytextwidth]
+    \begin{column}{0.59\textwidth}
+      \large The course repository is open for collaboration.\normalsize
+      \vspace{0.6em}
+      \begin{itemize}
+        \item Find the slides, notebook and data. Clone it.
+        \item Report a mistake or an unclear explanation in an issue.
+        \item Suggest a correction or a better example with a pull request.
+      \end{itemize}
+      \vspace{0.5em}
+      \href{https://github.com/NaitsabesMue/stochastic-modeling-simulation-ds}{\textbf{Open the course repository}}
+      \par\vspace{0.2em}
+      {\scriptsize\texttt{github.com/NaitsabesMue/}\\
+      \texttt{stochastic-modeling-}\\
+      \texttt{simulation-ds}}
+    \end{column}
+    \begin{column}{0.37\textwidth}
+      \centering
+      \qrcode[height=3.3cm,level=H,padding]{https://github.com/NaitsabesMue/stochastic-modeling-simulation-ds}
+      \par\small Scan for the repository
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \end{document}
