@@ -1,0 +1,703 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{AMU}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning}
+
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox to .88\paperwidth{%
+    \hspace*{1em}{\color{AMU_dk2}\footnotesize\insertshorttitle}%
+    \hfil%
+    {\color{AMU_dk2}\footnotesize\insertframenumber{} / \inserttotalframenumber}%
+  }%
+  \vskip1ex%
+}
+
+\title[Stochastic Models and Simulation]{Stochastic Models and Simulation}
+\subtitle{Week 2: how limited service capacity creates waiting}
+\author{Sebastian M\"uller}
+\date{2026/27}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\section{From demand to waiting}
+
+\begin{frame}{Recap: arrival times}
+  \footnotesize\textbf{Training daily mean:} Sun--Thu 1,781; Friday 539; Saturday 247.
+  \normalsize
+  \centering
+  \begin{tikzpicture}[x=0.36cm,y=0.057cm,font=\scriptsize]
+    \draw[->] (0,0)--(24,0) node[above left] {hour};
+    \draw[->] (0,0)--(0,45) node[above,align=center] {mean entries\\per 15 min};
+    \foreach \x in {0,6,12,18,23} {
+      \draw (\x,0.6)--(\x,-0.6) node[below] {\x:00};
+    }
+    \foreach \y in {10,20,30,40} {
+      \draw (0.25,\y)--(-0.25,\y) node[left] {\y};
+    }
+    \draw[very thick,blue]
+      plot coordinates {(0,1.85) (1,0.50) (2,0.40) (3,0.10)
+      (4,0.28) (5,0.47) (6,2.02) (7,11.30) (8,22.98)
+      (9,38.90) (10,40.80) (11,32.95) (12,29.60)
+      (13,31.38) (14,34.62) (15,35.80) (16,30.98)
+      (17,22.77) (18,23.40) (19,20.40) (20,16.82)
+      (21,16.60) (22,17.52) (23,12.68)};
+    \foreach \p in {(0,1.85),(1,0.50),(2,0.40),(3,0.10),
+      (4,0.28),(5,0.47),(6,2.02),(7,11.30),(8,22.98),
+      (9,38.90),(10,40.80),(11,32.95),(12,29.60),
+      (13,31.38),(14,34.62),(15,35.80),(16,30.98),
+      (17,22.77),(18,23.40),(19,20.40),(20,16.82),
+      (21,16.60),(22,17.52),(23,12.68)} {
+      \fill[blue] \p circle (1.3pt);
+    }
+    \foreach \x in {7,8,9,11,17,23} {
+      \draw[gray,dashed] (\x,0)--(\x,43);
+    }
+  \end{tikzpicture}
+
+  \raggedright
+  \scriptsize The curve uses ten \textbf{regular} working days (Sun--Thu) from 1--14 November. Each point averages $4\times10=40$ quarter-hour counts. Twelve later working days are held out.
+  \small
+  \begin{itemize}
+    \item Use separate profiles for regular working days, Friday and Saturday.
+    \item On the training plot, choose simple periods by eye. Treat the boundaries as provisional and check them on held-out days.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Candidate 1: a pooled Poisson profile}
+  The dashed boundaries on the training plot define seven periods:
+  \vspace{0.35em}
+
+  \centering
+  \small
+  \begin{tabular}{@{}lcr@{}}
+    \toprule
+    Period $b$ & Clock time & Fitted mean $\widehat m_b$ per 15 min\\
+    \midrule
+    Night & 00:00--07:00 & 0.8\\
+    Opening & 07:00--08:00 & 11.3\\
+    Build-up & 08:00--09:00 & 23.0\\
+    Morning peak & 09:00--11:00 & 39.9\\
+    Daytime & 11:00--17:00 & 32.6\\
+    Evening & 17:00--23:00 & 19.6\\
+    Late & 23:00--24:00 & 12.7\\
+    \bottomrule
+  \end{tabular}
+
+  \raggedright
+  \normalsize
+  \vspace{0.5em}
+  For a slot $s$ in period $b$, start with
+  \[
+    N_{d,s}\sim\operatorname{Poisson}(\widehat m_b).
+  \]
+  This model uses seven fitted means instead of one before.
+\end{frame}
+
+\begin{frame}{Check the model on new days}
+  \footnotesize
+  The check set contains 12 regular working days from 15--30 November, which were not used to fit the model. 
+  \centering
+  \small
+  \begin{tabular}{@{}lrrrr@{}}
+    \toprule
+      & \multicolumn{2}{c}{Mean} & \multicolumn{2}{c}{Variance}\\
+    Period & Fitted & Held out & Poisson & Held out\\
+    \midrule
+    Night & 0.8 & 0.5 & 0.8 & 0.8\\
+    Opening & 11.3 & 8.2 & 11.3 & 9.2\\
+    Build-up & 23.0 & 19.4 & 23.0 & 42.7\\
+    Morning peak & 39.9 & 38.6 & 39.9 & 67.8\\
+    Daytime & 32.6 & 31.0 & 32.6 & 55.0\\
+    Evening & 19.6 & 18.6 & 19.6 & 73.8\\
+    Late & 12.7 & 11.6 & 12.7 & 21.8\\
+    \bottomrule
+  \end{tabular}
+  \raggedright
+  \vspace{0.5cm}
+  
+  Busy-period means are reasonably close, but the fixed-rate Poisson variances are too small.
+\end{frame}
+
+\begin{frame}{Daily demand varies across regular working days}
+  \centering
+  \begin{tikzpicture}[x=0.78cm,y=0.0018cm,font=\scriptsize]
+    \draw[->] (0.35,0)--(10.75,0);
+    \draw[->] (0.35,0)--(0.35,2400) node[above,align=center] {total\ arrivals};
+    \foreach \y in {0,500,1000,1500,2000} {
+      \draw (0.47,\y)--(0.23,\y) node[left] {\y};
+    }
+    \foreach \x/\day/\count in {
+      1/1/2011,2/2/2200,3/3/1705,4/4/1504,5/7/1396,
+      6/8/1555,7/9/1879,8/10/1877,9/11/1860,10/14/1818
+    } {
+      \fill[blue!65] (\x-0.28,0) rectangle (\x+0.28,\count);
+      \node[below] at (\x,0) {\day};
+    }
+    \node at (5.5,-260) {November date};
+    \draw[very thick,red,dashed] (0.6,1780.5)--(10.4,1780.5)
+      node[above left] {mean $=1{,}780.5$};
+  \end{tikzpicture}
+
+  \raggedright
+  \small
+  Each bar is the total number of arrivals on one complete regular working day in the training period. The totals range from $1{,}396$ to $2{,}200$: some days are quieter or busier throughout the day.
+\end{frame}
+
+\begin{frame}{Candidate 2: one daily level, many interval counts}
+  \small
+  For each regular working day $d$:
+  \begin{enumerate}
+    \item Draw one daily demand multiplier $G_d$. A value above 1 means a busier day; a value below 1 means a quieter day.
+    \item Let $s$ denote one 15-minute slot and let $b(s)$ be the period containing that slot. The fitted baseline mean $\widehat m_{b(s)}$ comes from Candidate~1.
+    \item Generate a separate arrival count for every slot:
+      \[
+        N_{d,s}\mid G_d
+          \sim\operatorname{Poisson}\!\left(G_d\widehat m_{b(s)}\right).
+      \]
+  \end{enumerate}
+
+  \textbf{Example:} At 09:30, $b(s)$ is the morning peak and $\widehat m_{b(s)}=39.9$. If $G_d=1.10$, the Poisson mean for that slot is $1.10\times39.9=43.9$.
+\end{frame}
+
+\begin{frame}{Fit the amount of day-to-day variation}
+  \small
+  Let the total arrivals on day $d$ be
+  \[
+    T_d=\sum_{s=1}^{96}N_{d,s},
+    \qquad
+    M=\sum_{s=1}^{96}\widehat m_{b(s)}=1{,}780.5.
+  \]
+  If the slot counts are conditionally independent, their sum satisfies
+  \[
+    T_d\mid G_d\sim\operatorname{Poisson}(G_dM).
+  \]
+  Set $\mathbb E[G_d]=1$ and $\operatorname{Var}(G_d)=\alpha$. Then
+  \[
+    \mathbb E[T_d]=M,
+    \qquad
+    \operatorname{Var}(T_d)=\underbrace{M}_{\text{Poisson variation}}
+      +\underbrace{\alpha M^2}_{\text{variation between days}}.
+  \]
+  The ten training totals have sample mean $1{,}780.5$ and sample variance $59{,}632.7$. Matching the model variance to the sample variance gives
+  \[
+    \widehat\alpha
+      =\frac{59{,}632.7-1{,}780.5}{1{,}780.5^2}
+      =0.01825.
+  \]
+\end{frame}
+
+\begin{frame}{Choose a distribution that we can simulate}
+  We need a positive multiplier with mean 1 and variance $\widehat\alpha$. For
+  \[
+    G_d\sim\operatorname{Gamma}(k,\theta),
+  \]
+  using the shape--scale convention,
+  \[
+    \mathbb E[G_d]=k\theta,
+    \qquad
+    \operatorname{Var}(G_d)=k\theta^2.
+  \]
+  Choosing
+  \[
+    \theta=\widehat\alpha=0.01825,
+    \qquad
+    k=\frac{1}{\widehat\alpha}=54.8
+  \]
+  gives the required mean and variance. The standard deviation of $G_d$ is
+  \[
+    \sqrt{0.01825}=0.135,
+  \]
+  so day-level demand varies by about $13.5\%$ of its mean per standard deviation. 
+\end{frame}
+
+\begin{frame}{Held-out check: the second model is credible for the peak}
+  \footnotesize
+  Each row again pools 15-minute counts. Sample variances use divisor $n-1$.
+  \small
+  \vspace{0.2em}
+  \centering
+  \begin{tabular}{@{}lrrrr@{}}
+    \toprule
+      & \multicolumn{2}{c}{Mean} & \multicolumn{2}{c}{Variance}\\
+    Period & Model & Held out & Model & Held out\\
+    \midrule
+    Night & 0.8 & 0.5 & 0.8 & 0.8\\
+    Opening & 11.3 & 8.2 & 13.6 & 9.2\\
+    Build-up & 23.0 & 19.4 & 32.6 & 42.7\\
+    Morning peak & 39.9 & 38.6 & 68.8 & 67.8\\
+    Daytime & 32.6 & 31.0 & 51.9 & 55.0\\
+    Evening & 19.6 & 18.6 & 26.6 & 73.8\\
+    Late & 12.7 & 11.6 & 15.6 & 21.8\\
+    \bottomrule
+  \end{tabular}
+  \raggedright
+\end{frame}
+
+\begin{frame}{What did the two arrival models show?}
+  \small
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.47\textwidth}
+      \textbf{Candidate 1: fixed rates}
+      \begin{itemize}
+        \item One Poisson mean for each of the seven time periods.
+        \item The observed counts vary more than this model predicts.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.47\textwidth}
+      \textbf{Candidate 2: variable days}
+      \begin{itemize}
+        \item Multiply the seven means by one random daily demand level.
+        \item This improves the variance fit during the morning and daytime.
+        \item The evening variation remains unexplained.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.5em}
+  \textbf{Conclusion:} Candidate 2 is a provisional model  not yet an ``accepted'' model for the complete day. 
+\end{frame}
+
+\begin{frame}{How much does one additional agent reduce waiting?}
+  \centering
+  \begin{tikzpicture}[
+      scale=0.95,transform shape,
+      box/.style={draw=AMU_dk2,very thick,rounded corners,fill=AMU_dk2!7,
+                  minimum height=0.68cm,align=center,font=\small},
+      result/.style={draw=AMU_acc6,very thick,rounded corners,fill=AMU_acc5!45,
+                     minimum height=0.68cm,align=center,font=\small\bfseries},
+      arrow/.style={->,very thick,draw=AMU_dk2},
+      node distance=0.55cm and 0.55cm
+    ]
+    \node[box,minimum width=2.8cm] (arrivals) {Arrival model};
+    \node[box,minimum width=2.8cm,right=0.8cm of arrivals] (service) {Service assumption};
+    \node[box,minimum width=3.8cm,below=of $(arrivals)!0.5!(service)$] (same)
+      {Same arrivals and service times};
+    \node[box,minimum width=2.5cm,below left=0.6cm and -0.15cm of same] (base)
+      {Baseline staffing};
+    \node[box,minimum width=2.5cm,below right=0.6cm and -0.15cm of same] (extra)
+      {One additional agent};
+    \node[box,minimum width=3.2cm,below=0.7cm of same |- base.south] (compare)
+      {Difference in waiting};
+    \node[result,minimum width=4.4cm,below=of compare] (answer)
+      {Answer under stated assumptions};
+
+    \draw[arrow] (arrivals)--(same);
+    \draw[arrow] (service)--(same);
+    \draw[arrow] (same)--(base);
+    \draw[arrow] (same)--(extra);
+    \draw[arrow] (base)--(compare);
+    \draw[arrow] (extra)--(compare);
+    \draw[arrow,draw=AMU_acc6] (compare)--(answer);
+  \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{The queue changes when an event occurs}
+  \centering
+  An \textbf{event} is an occurrence that changes the system: a call arrives,
+  service starts, or service ends.
+  \vspace{0.6em}
+
+  \resizebox{0.94\textwidth}{!}{%
+  \begin{tikzpicture}[
+      box/.style={draw,rounded corners,minimum width=2.25cm,minimum height=1cm,
+                  align=center,font=\small},
+      node distance=0.55cm
+    ]
+    \node[box] (arrive) {Arrival\\at time $A_i$};
+    \node[box,right=of arrive] (wait) {Wait if all\\agents are busy};
+    \node[box,right=of wait] (serve) {Service starts\\at time $B_i$};
+    \node[box,right=of serve] (leave) {Departure\\at time $D_i$};
+    \draw[->,thick] (arrive)--(wait);
+    \draw[->,thick] (wait)--(serve);
+    \draw[->,thick] (serve)--(leave);
+  \end{tikzpicture}
+  }
+  \vspace{0.9em}
+  \[
+    W_i=B_i-A_i,\qquad S_i=D_i-B_i,\qquad T_i=D_i-A_i.
+  \]
+  \begin{itemize}
+    \item $W_i$: waiting time before service
+    \item $S_i$: service duration
+    \item $T_i$: total time in the modelled system
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Start with a hand trace: one agent}
+  \centering
+  \small
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}crrrrr@{}}
+    \toprule
+    Customer & Arrival $A_i$ & Wait $W_i$ & Start $B_i$ & Service $S_i$ & Departure $D_i$\\
+    \midrule
+    1 & 0.0 & 0.0 & 0.0 & 2.0 & 2.0\\
+    2 & 1.0 & 1.0 & 2.0 & 2.0 & 4.0\\
+    3 & 2.5 & 1.5 & 4.0 & 1.0 & 5.0\\
+    4 & 2.7 & 2.3 & 5.0 & 2.5 & 7.5\\
+    5 & 3.0 & 4.5 & 7.5 & 1.5 & 9.0\\
+    \bottomrule
+  \end{tabular}
+  \normalsize
+  \vspace{0.8em}
+  \[
+    B_i=\max(A_i,D_{i-1}),\qquad D_i=B_i+S_i.
+  \]
+\end{frame}
+
+\begin{frame}{Repeat the hand trace with two agents}
+  \small
+  Use the same arrivals $A_i$ and service times $S_i$ as before. Assign each
+  customer to the agent who becomes free first.
+
+  \vspace{0.5em}
+  \centering
+  \setlength{\tabcolsep}{5pt}
+  \begin{tabular}{@{}crrrrrr@{}}
+    \toprule
+    Customer & $A_i$ & $W_i$ & $B_i$ & $S_i$ & $D_i$ & Agent\\
+    \midrule
+    1 & 0.0 & 0.0 & 0.0 & 2.0 & 2.0 & 1\\
+    2 & 1.0 & 0.0 & 1.0 & 2.0 & 3.0 & 2\\
+    3 & 2.5 & 0.0 & 2.5 & 1.0 & 3.5 & 1\\
+    4 & 2.7 & 0.3 & 3.0 & 2.5 & 5.5 & 2\\
+    5 & 3.0 & 0.5 & 3.5 & 1.5 & 5.0 & 1\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.8em}
+  \normalsize
+  \[
+    \text{Total waiting:}\qquad
+    9.3\ \text{with one agent}
+    \quad\longrightarrow\quad
+    0.8\ \text{with two agents}.
+  \]
+\end{frame}
+
+\section{Build and check the simulator}
+
+
+\begin{frame}{What the simulator must record}
+  \small
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    Recorded value & What it lets us calculate\\
+    \midrule
+    arrival time & demand chronology\\
+    service-start time & waiting time\\
+    departure time & time in system\\
+    assigned agent & workload of each agent\\
+    queue length after each event & queue length over time\\
+    number of busy agents after each event & agent occupancy over time\\
+    \bottomrule
+  \end{tabular}
+  \par
+  \vspace{0.55em}
+  \textbf{Summarize distributions, not only averages:}
+  \begin{itemize}
+    \item \textbf{Waiting time across customers:} mean, median, quantiles and fraction who wait.
+    \item \textbf{Queue length over time:} mean, quantiles, maximum and fraction of time the queue is non-empty.
+    \item \textbf{Agent occupancy over time:} mean fraction of agents busy and fraction of time exactly $0,1,\ldots,c$ agents are busy.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Check the implementation before the model}
+  \begin{itemize}
+    \item Run both five-customer examples, then verify by hand that the code assigns the same agents, start times, waits and departure times.
+    \item Check every customer: $B_i\ge A_i$, $D_i=B_i+S_i$, and $W_i\ge0$.
+    \item Increase service duration: waits should not decrease for the same arrivals.
+    \item Run the same seed twice: the result should be identical.
+  \end{itemize}
+  \vspace{0.5em}
+  Passing these checks supports the implementation. It does not show that the implementation is correct.
+\end{frame}
+
+\begin{frame}[fragile]{Make the checks repeatable with unit tests}
+  \footnotesize
+  A \textbf{unit test} is a small automatic check of one behaviour whose
+  correct answer is already known.
+
+  \vspace{0.4em}
+\begin{verbatim}
+import math
+
+def test_two_agents():
+    result = simulate_queue(
+        arrivals=[0.0, 1.0, 2.5, 2.7, 3.0],
+        services=[2.0, 2.0, 1.0, 2.5, 1.5],
+        number_of_agents=2,
+    )
+    assert result["agent"] == [1, 2, 1, 2, 1]
+    expected_waits = [0.0, 0.0, 0.0, 0.3, 0.5]
+    pairs = zip(result["wait"], expected_waits)
+    for got, expected in pairs:
+        assert math.isclose(got, expected, abs_tol=1e-9)
+\end{verbatim}
+
+  \vspace{0.25em}
+  Run the tests after every code change; add a test whenever a bug is found.
+\end{frame}
+
+\section{Connect the model to the call-centre question}
+
+\begin{frame}{Inputs: evidence versus scenario}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{From the Week 1 extract}
+      \begin{itemize}
+        \item time-of-day pattern of VRU entries
+        \item strong differences between regular working days, Friday and Saturday
+        \item pooled working-day periods and day-to-day demand variation
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Scenario assumptions this week}
+      \begin{itemize}
+        \item each selected VRU entry requests service
+        \item exponential service duration
+        \item identical agents and FIFO service
+        \item no abandonment
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Two generators chosen for the exercise}
+  \footnotesize
+  For one repetition, generate one arrival path from 09:00 to 11:00:
+  \vspace{0.25em}
+
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{Parametric model}
+      \begin{enumerate}
+        \item Draw one daily multiplier $G_d$.
+        \item Use
+          \[
+            \lambda_{d,b}=\frac{G_d\widehat m_b}{15}
+          \]
+          arrivals per minute.
+        \item Draw the time to the next arrival from
+          $\operatorname{Exponential}(\lambda_{d,b})$.
+      \end{enumerate}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Whole-morning bootstrap}
+      \begin{enumerate}
+        \item Sample one of the ten ordered vectors of eight morning counts, with replacement.
+        \item Keep the intervals in clock order.
+        \item Place the required arrivals uniformly inside each interval.
+      \end{enumerate}
+    \end{column}
+  \end{columns}
+ \end{frame}
+
+\begin{frame}{Service is a scenario input for now}
+  Suppose service times are exponential with mean 6 minutes:
+  \[
+    S_i\sim\operatorname{Exponential}(\mu),
+    \qquad \mathbb E[S_i]=1/\mu=6\text{ minutes}.
+  \]
+  \begin{itemize}
+    \item The value is chosen for a classroom scenario; it is not estimated from the Week 1 CSV.
+    \item The exponential assumption makes a transparent first model.
+    \item In later lectures we will estimate and compare service-time distributions using appropriate records.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{A theoretical reference model: $M/M/c$}
+  \centering
+  \begin{tikzpicture}[
+      box/.style={draw=AMU_dk2,very thick,rounded corners,fill=AMU_dk2!7,
+                  minimum height=0.9cm,minimum width=2.7cm,align=center},
+      arrow/.style={->,very thick,draw=AMU_dk2},
+      node distance=0.65cm
+    ]
+    \node[box] (arrivals) {Poisson arrivals\\rate $\lambda$};
+    \node[box,right=of arrivals] (queue) {FIFO queue};
+    \node[box,right=of queue] (agents) {$c$ identical agents\\rate $\mu$ each};
+    \draw[arrow] (arrivals)--(queue);
+    \draw[arrow] (queue)--(agents);
+  \end{tikzpicture}
+
+  \raggedright
+  \vspace{0.9em}
+  \begin{itemize}
+    \item The first $M$: independent exponential times between arrivals, equivalently a constant-rate Poisson arrival process.
+    \item The second $M$: independent exponential service times with mean $1/\mu$.
+    \item The $c$: the number of agents working in parallel.
+    \item The waiting room is unlimited; service is FIFO; callers do not abandon.
+  \end{itemize}
+
+  \vspace{0.3em}
+  This infinite-horizon model is a theoretical reference for the finite morning simulation.
+\end{frame}
+
+\begin{frame}{The reference model gives a stability test}
+  \small
+  When a queue is present, all $c$ agents are busy. Their combined service
+  capacity is $c\mu$ calls per minute, while calls arrive at rate $\lambda$.
+  Define
+  \[
+    \rho=\frac{\lambda}{c\mu}.
+  \]
+  For the infinite-horizon $M/M/c$ model, a stationary queue exists exactly when
+  \[
+    \rho<1 \qquad\text{or, equivalently,}\qquad \lambda<c\mu.
+  \]
+
+  \vspace{0.7em}
+  \begin{itemize}
+    \item If $\rho\ge 1$, arrivals match or exceed the maximum average service rate, so the queue cannot settle into a stationary distribution.
+    \item If $\rho<1$, the system has enough average capacity, but random arrival and service variation can still create long waits.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Apply the stability test to the morning scenario}
+  \small
+  For an average-demand morning,
+  $\lambda=39.9/15=2.66$ calls/min and $\mu=1/6$ calls/min per agent.
+
+  \vspace{0.7em}
+  \centering
+  \begin{tabular}{@{}crrc@{}}
+    \toprule
+    Agents $c$ & Capacity $c\mu$ & $\rho$ & Theoretical diagnosis\\
+    \midrule
+    15 & 2.500 & 1.064 & no stationary queue\\
+    16 & 2.667 & 0.998 & stable, almost no spare capacity\\
+    17 & 2.833 & 0.939 & stable, some spare capacity\\
+    \bottomrule
+  \end{tabular}
+
+  \raggedright
+  \vspace{0.8em}
+  Since $\lambda/\mu=15.96$, 16 is the smallest stable integer for an
+  average-demand morning; 17 is the first level with some buffer. These are
+  candidate staffing levels, not yet a waiting-time conclusion. On a simulated
+  morning, $\lambda$ is multiplied by $G_d$.
+\end{frame}
+
+\begin{frame}{First simulate around the capacity boundary}
+  The theoretical model tells us where to look. Simulate the same arrival and
+  service paths with:
+  \[
+    15\text{ agents}\qquad 16\text{ agents}\qquad 17\text{ agents}.
+  \]
+  \begin{itemize}
+    \item Does a queue remain at 11:00?
+    \item How does the queue-length distribution change?
+    \item How does the waiting-time distribution change?
+    \item How often are all agents busy?
+  \end{itemize}
+  \vspace{0.4em}
+  This locates the transition from insufficient capacity to useful spare
+  capacity for the stated scenario.
+\end{frame}
+
+\begin{frame}{Then measure the effect of one additional agent}
+  After locating the critical range, compare 16 and 17 agents using identical
+  arrivals and service requirements.
+  \vspace{0.5em}
+
+  Report the change in:
+  \begin{itemize}
+    \item mean, median and upper quantiles of waiting time;
+    \item fraction of callers who wait;
+    \item queue-length distribution;
+    \item agent-occupancy distribution;
+    \item unfinished calls at 11:00.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{What can we decide after Week 2?}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{Supported}
+      \begin{itemize}
+        \item explain how limited capacity creates waiting;
+        \item implement and check a multi-agent queue;
+        \item compare staffing scenarios under stated inputs.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Still required for the bank}
+      \begin{itemize}
+        \item agent-directed arrivals and routing;
+        \item cleaned service-time data;
+        \item staffing schedules and abandonment;
+        \item uncertainty across repeated simulations.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Use an LLM to design stronger checks}
+  \footnotesize
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.48\textwidth}
+      \textbf{Code-test prompt}
+
+      \emph{Design three minimal tests for this FIFO multi-agent simulator.
+      Include simultaneous arrivals, a tie between free agents and an invalid
+      input. For valid cases, give every expected agent, start, wait and
+      departure; for the invalid case, state the expected error.}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \textbf{Workflow-audit prompt}
+
+      \emph{Trace the claim ``17 agents reduce waiting relative to 16'' through
+      the arrival data, service assumptions, random generator, queue code and
+      reported summaries. At each stage, propose one failure mode and one
+      independent check.}
+    \end{column}
+  \end{columns}
+
+  \vspace{0.8em}
+  \textbf{Your work:}
+  \begin{enumerate}
+    \item verify every predicted schedule by hand;
+    \item implement the valid examples as unit tests;
+    \item check every workflow claim against the data or stated assumptions;
+    \item record corrections to the LLM and retain the useful checks.
+  \end{enumerate}
+\end{frame}
+
+\section{Hands-on work and close}
+
+\begin{frame}{Notebook route}
+  \begin{enumerate}
+    \item Reproduce the one-agent and two-agent hand traces.
+    \item Implement the rules for updating a multi-agent queue in Python.
+    \item Test invariants and simple limiting cases.
+    \item Reproduce the arrival-model fit and held-out checks.
+    \item Generate morning-peak arrivals with the parametric model and the whole-morning bootstrap.
+    \item Scan 15, 16 and 17 agents around the theoretical capacity boundary.
+    \item Compare 16 and 17 agents using the same random inputs.
+    \item State the conditional result and the evidence still missing.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{What we take forward}
+  \begin{itemize}
+    \item Waiting is an interaction between arrival timing, service duration and limited capacity.
+    \item The $M/M/c$ stability condition identifies staffing levels that merit simulation.
+    \item A short event-driven algorithm can simulate a FIFO multi-agent queue.
+    \item Code checks and model checks answer different questions.
+    \item A staffing comparison is only as credible as its arrival, service, routing and abandonment assumptions.
+  \end{itemize}
+  \vspace{0.5em}
+  \textbf{Next week:} decide whether a simulated difference is larger than simulation noise.
+\end{frame}
+
+\end{document}

@@ -4,9 +4,9 @@
 
 Some questions about a real system cannot be answered from its existing records. Would another agent shorten a call-center queue? Would a machine cope with twice the load? The records describe the system **as it was**, while these questions ask what would happen **after a change**. In this course we observe a process, build a stochastic model, simulate it, compare its output with observed data, revise assumptions that fail, and use the model to assess a decision.
 
-Queueing systems are the worked setting. Students learn to describe random arrivals and service, fit model inputs to data, check simulation uncertainty, compare models, and explain which assumptions drive a recommendation. Coding is in Python without SimPy. LLMs may be used to suggest code or challenge a theoretical argument; their output must be checked against a derivation, a reproducible computation, or an independent source. Never upload raw customer records or student work to an LLM.
+Queueing systems are the worked setting. Students learn to describe random arrivals and service, fit model inputs to data, check simulation uncertainty, compare models, and explain which assumptions drive a recommendation. Coding is in Python. LLMs may be used to suggest code or challenge a theoretical argument; their output must be checked against a derivation, a reproducible computation, or an independent source. Never upload raw customer records or student work to an LLM.
 
-The course has seven three-hour hands-on sessions and ends in a project. Basic Python is required; some probability and statistics help. **Only week 1 has teaching materials on `main` so far.** Weeks 2–7 have the outline below, but their materials still need to be developed. Previous slides, notebooks, case data, and evaluation files are preserved on the `2025-26` branch.
+The course has seven three-hour hands-on sessions and ends in a project. Basic Python is required; some probability and statistics help. Week 1 is complete on `main`, and Week 2 is under active revision. Weeks 3–7 have the outline below, but their materials still need to be developed. Previous slides, notebooks, case data, and evaluation files are preserved on the `2025-26` branch.
 
 ## Course route
 
@@ -43,7 +43,7 @@ The lab uses a non-identifying 15-minute arrival-count extract from the [Technio
 
 The lab follows the lecture: inspect the 96 unaveraged counts from 1 November, recall the Poisson process, fit one baseline rate to all 2,880 November intervals, check the simulator against theoretical predictions, then compare with the observed data. Time-of-day variation comes first; differences between weekdays are a further check requiring multiple days.
 
-Save your completed notebook and notes under ignored `students/`; never commit or push student work. Start Jupyter from the repository root when running that copy so the loader finds the data. Open the lab in Jupyter or VS Code with a Python 3 kernel. Its code uses the Python standard library, and the included aggregate CSV is enough for week 1. No SimPy installation or raw-data download is needed to run it.
+Save your completed notebook and notes under ignored `students/`; never commit or push student work. Start Jupyter from the repository root when running that copy so the loader finds the data. Open the lab in Jupyter or VS Code with a Python 3 kernel. Its code uses the Python standard library, and the included aggregate CSV is enough for week 1. No raw-data download is needed to run it.
 
 ## Private material
 
