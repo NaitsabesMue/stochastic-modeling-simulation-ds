@@ -1,0 +1,87 @@
+{
+  "lower_edges_seconds": [
+    0,
+    10,
+    30,
+    60,
+    90,
+    120,
+    180,
+    240,
+    360,
+    480,
+    600,
+    900,
+    1200,
+    1800
+  ],
+  "long_service_seconds": 600,
+  "training": {
+    "counts": [
+      14,
+      91,
+      332,
+      435,
+      329,
+      483,
+      262,
+      254,
+      124,
+      79,
+      87,
+      19,
+      22,
+      13
+    ],
+    "sum_seconds": 520364,
+    "sum_squared_seconds": 278303680,
+    "service_groups": {
+      "regular_banking": {
+        "retained_count": 1780,
+        "service_seconds": 327948,
+        "long_count": 74,
+        "long_seconds": 65657
+      },
+      "other_services": {
+        "retained_count": 750,
+        "service_seconds": 192416,
+        "long_count": 67,
+        "long_seconds": 78059
+      }
+    }
+  },
+  "held_out": {
+    "counts": [
+      14,
+      115,
+      304,
+      316,
+      272,
+      405,
+      298,
+      325,
+      184,
+      87,
+      123,
+      43,
+      26,
+      16
+    ],
+    "sum_seconds": 633555,
+    "sum_squared_seconds": 524747055,
+    "service_groups": {
+      "regular_banking": {
+        "retained_count": 1716,
+        "service_seconds": 401855,
+        "long_count": 115,
+        "long_seconds": 120562
+      },
+      "other_services": {
+        "retained_count": 798,
+        "service_seconds": 231700,
+        "long_count": 93,
+        "long_seconds": 106020
+      }
+    }
+  }
+}

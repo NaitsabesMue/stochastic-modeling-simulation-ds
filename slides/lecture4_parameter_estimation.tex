@@ -1,0 +1,472 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{AMU}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning}
+
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox to .88\paperwidth{%
+    \hspace*{1em}{\color{AMU_dk2}\footnotesize\insertshorttitle}%
+    \hfil%
+    {\color{AMU_dk2}\footnotesize\insertframenumber{} / \inserttotalframenumber}%
+  }%
+  \vskip1ex%
+}
+
+\title[Stochastic Models and Simulation]{Stochastic Models and Simulation}
+\subtitle{Week 4: how long does an agent stay busy?}
+\author{Sebastian M\"uller}
+\date{2026/27}
+
+\begin{document}
+
+\begin{frame}
+  \renewcommand{\AMUtitlebar}{%
+    \noindent\colorbox{AMU_dk2}{\rule{0pt}{1.2ex}\hspace{\dimexpr0.36\linewidth-2\fboxsep\relax}}%
+    \colorbox{AMU_lt2}{\rule{0pt}{1.2ex}\hspace{\dimexpr0.28\linewidth-2\fboxsep\relax}}%
+    \colorbox{AMU_acc6}{\rule{0pt}{1.2ex}\hspace{\dimexpr0.36\linewidth-2\fboxsep\relax}}%
+  }
+  \titlepage
+\end{frame}
+
+\section{Observe service}
+
+\begin{frame}{Does the six-minute assumption hold up?}
+  In Week 3, every simulated service duration came from an exponential
+  distribution with a mean of six minutes.
+
+  \vspace{0.7em}
+  \begin{block}{Why look at service times?}
+    While an agent handles a long call, the next callers have one fewer
+    agent available. Both the typical duration and the frequency of long
+    calls can change the staffing comparison.
+  \end{block}
+
+  \vspace{0.4em}
+  Today we measure service, fit two distributions, and check which calls
+  account for the most work. Then we revisit the staffing experiment.
+\end{frame}
+
+\begin{frame}{Three inputs to the bank queue}
+  \centering
+  \begin{tikzpicture}[
+    inputbox/.style={draw=AMU_dk2,rounded corners,align=center,
+      text width=2.4cm,minimum height=1.25cm,fill=AMU_dk2!7}]
+    \node[inputbox,minimum height=1.7cm] (arrival) at (-3.2,1.7) {Agent requests\\When do they arrive?};
+    \node[inputbox,minimum height=1.7cm,fill=AMU_lt2,draw=AMU_acc6,very thick] (service) at (0,1.7)
+      {Service duration\\\textbf{Week 4}};
+    \node[inputbox,minimum height=1.7cm] (patience) at (3.2,1.7) {Caller patience\\When do callers leave?};
+    \node[inputbox,text width=6.3cm] (queue) at (0,-0.55)
+      {Queue and staffing\\Predict waiting and abandonment};
+    \draw[->,thick] (arrival.south) -- ([xshift=-2.45cm]queue.north);
+    \draw[->,thick] (service.south) -- (queue.north);
+    \draw[->,thick] (patience.south) -- ([xshift=2.45cm]queue.north);
+  \end{tikzpicture}
+
+  \vspace{0.8em}
+  \raggedright
+  Next week we count actual agent requests and study how long callers are
+  willing to wait before hanging up.
+\end{frame}
+
+\begin{frame}{Which part of the call are we measuring?}
+  \begin{center}
+    \begin{tabular}{@{}lll@{}}
+      \toprule
+      Call entered queue & Agent started & Agent finished\\
+      \midrule
+      09:14:12 & 09:14:54 & 09:18:24\\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \small Example with invented times. Outcome \texttt{AGENT} means a human
+  agent handled the call.\normalsize
+
+  \vspace{0.65em}
+  \begin{itemize}
+    \item The caller waited \textbf{42 seconds}.
+    \item The agent was busy for \textbf{210 seconds}. This is the recorded service duration,
+      \texttt{ser\_time}.
+    \item If the caller leaves before service, there is no agent service duration.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Same mean service time, different waits}
+  One agent. Three calls arrive at minutes $0$, $4$, and $8$.
+  Both schedules contain 12 minutes of service.
+
+  \vspace{0.7em}
+  \centering
+  \begin{tikzpicture}[x=0.56cm,y=0.88cm,font=\small]
+    \node[below,align=center] at (6,3.3) {Call arrivals};
+    \foreach \x in {0,4,8} {
+      \draw[->,thick] (\x,2.8) -- (\x,2.2);
+      \draw[densely dotted,black!45] (\x,2.1) -- (\x,0.12);
+    }
+    \node[left] at (-0.3,1.68) {4, 4, 4 min};
+    \node[left] at (-0.3,0.70) {8, 2, 2 min};
+    \foreach \x/\finish/\caller in {0/4/1,4/8/2,8/12/3} {
+      \draw[fill=AMU_dk2!16,draw=AMU_dk2] (\x,1.4) rectangle
+        node {\caller} (\finish,1.95);
+    }
+    \foreach \x/\finish/\caller in {0/8/1,8/10/2,10/12/3} {
+      \draw[fill=AMU_lt2,draw=AMU_acc6] (\x,0.42) rectangle
+        node {\caller} (\finish,0.97);
+    }
+    \draw[->] (0,0) -- (12.55,0) node[right] {min};
+    \foreach \x in {0,4,8,10,12} {
+      \draw (\x,-0.06) -- (\x,0.06);
+      \node[below] at (\x,-0.06) {\x};
+    }
+  \end{tikzpicture}
+
+  \vspace{0.5em}
+  \raggedright
+  Each block shows when one caller is in service. How long does each
+  caller wait in the second schedule? What changed for callers 2 and 3?
+\end{frame}
+
+\begin{frame}{Check the very short services before fitting}
+  \small
+  Compare \texttt{AGENT} calls on Sunday--Thursday whose service started
+  from 09:00 to before 11:00. Keep the full service duration, even if
+  service ends after 11:00.
+
+  \vspace{0.55em}
+  \begin{center}
+    \begin{tabular}{@{}lrrr@{}}
+      \toprule
+      Month (1999) & Services & Under 10 s & Share\\
+      \midrule
+      January  & 3,631 & 163 & 4.49\%\\
+      November & 5,072 &  28 & 0.55\%\\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+
+  Brown et al.\ (2005) analysed this same bank. They report that its
+  manager traced many short services to agents hanging up.
+
+  \vspace{0.45em}
+  For our fit, exclude services under 10 seconds. This can also remove
+  genuine brief calls. In November, we retain 2,530 services on 1--14
+  (fit) and 2,514 on 15--30 (check).
+
+  \vspace{0.5em}
+  {\scriptsize
+    \href{https://seelab.net.technion.ac.il/data/}{Technion SEE Lab, AnonymousBank}.
+    \href{https://faculty.wharton.upenn.edu/wp-content/uploads/2012/04/Brown-etal-CCdata.pdf}{Brown et al.\ (2005), \emph{Statistical Analysis of a Telephone Call Center}, \S4.1}.}
+\end{frame}
+
+\begin{frame}{Most services are short. Some run much longer.}
+  \centering
+  \begin{tikzpicture}[x=1.45cm,y=0.0040cm]
+    \node[anchor=west,font=\scriptsize] at (-0.6,870) {Service records};
+    \foreach \y in {0,200,400,600,800} {
+      \draw[black!18] (-0.62,\y) -- (5.6,\y);
+      \node[anchor=east,font=\scriptsize] at (-0.62,\y) {\y};
+    }
+    \foreach \x/\n/\lab in {0/423/10 s--1 min,1/764/1--2 min,2/745/2--4 min,
+                             3/254/4--6 min,4/203/6--10 min,5/141/10+ min} {
+      \fill[AMU_dk2!78] (\x-0.29,0) rectangle (\x+0.29,\n);
+      \node[above,font=\scriptsize] at (\x,\n) {\n};
+      \node[below,font=\scriptsize] at (\x,0) {\lab};
+    }
+  \end{tikzpicture}
+
+  \vspace{0.55em}
+  \raggedright\small
+  Counts of the 2,530 retained services on training dates. The bars show
+  counts in ranges of different widths. Each range includes its lower endpoint.
+\end{frame}
+
+\section{Fit and check}
+
+\begin{frame}{Fit an exponential baseline to the observed mean}
+  Let $S$ be the service duration in seconds. Fit to the retained
+  records from 1--14 November.
+
+  \vspace{0.65em}
+  \begin{itemize}
+    \item Fit an exponential distribution with the observed mean,
+      $205.7$ seconds, or about $3.43$ minutes.
+    \item An exponential has equal mean and standard deviation. The
+      observed standard deviation is larger, at $260.2$ seconds.
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Give the model a separate control for spread}
+  \small
+  Draw $Z$ from a normal distribution with mean $\mu$ and standard deviation
+  $\sigma$. Set $S=e^Z$ seconds. Then the service duration $S$ is lognormal.
+
+  \vspace{0.5em}
+  Let $m$ and $v$ be the empirical mean and variance of $S$ on the
+  training dates. Pick the two parameters to match those two quantities:
+  \[
+    \sigma^2=\log(1+v/m^2), \qquad \mu=\log m-\sigma^2/2.
+  \]
+
+  The exponential and lognormal candidates now have the same average
+  duration. They can predict different shares of long calls.
+
+  \vspace{0.45em}
+  {\scriptsize
+  Brown et al.\ found a close lognormal approximation for November--December.
+  Here we fit our own parameters for the selected morning services and test them
+  on later November dates.}
+\end{frame}
+
+\begin{frame}{How often does a service last at least ten minutes?}
+  \small
+  We fit both models on 1--14 November. We set aside the services from
+  15--30 November to check the predictions.
+
+  \vspace{0.65em}
+  \centering
+  \begin{tabular}{@{}rrrrr@{}}
+    \toprule
+    & \multicolumn{2}{c}{Observed in November 1999}
+    & \multicolumn{2}{c}{Model predictions}\\
+    \cmidrule(lr){2-3}\cmidrule(l){4-5}
+    At least & 1--14 (fit) & 15--30 (check) & Exponential & Lognormal\\
+    \midrule
+    2 min  & 53.1\% & 59.9\% & 55.8\% & 52.5\%\\
+    6 min  & 13.6\% & 19.1\% & 17.4\% & 14.4\%\\
+    \textbf{10 min} & \textbf{5.6\%} & \textbf{8.3\%} & \textbf{5.4\%} & \textbf{5.7\%}\\
+    15 min &  2.1\% &  3.4\% &  1.3\% &  2.3\%\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.65em}
+  \raggedright
+  On 15--30 November, 208 of 2,514 retained services lasted at least ten
+  minutes (8.3\%). Both models predict a lower share.
+\end{frame}
+
+\begin{frame}{8.3\% of calls account for 35.8\% of service time}
+  Here we call a service \textbf{long} if it lasts \textbf{10 minutes or
+  more}. Both bars refer to the retained calls from 15--30 November.
+
+  \vspace{0.6em}
+  \centering
+  \begin{tikzpicture}[x=0.064cm,y=0.95cm,font=\small]
+    \node[anchor=east] at (-3,1.3) {By call count};
+    \node[anchor=east] at (-3,0.4) {By service hours};
+    \draw[fill=AMU_dk2!7,draw=black!24] (0,1.07) rectangle (100,1.53);
+    \draw[fill=AMU_dk2!7,draw=black!24] (0,0.17) rectangle (100,0.63);
+    \fill[AMU_dk2!82] (0,1.07) rectangle (8.27,1.53);
+    \fill[AMU_dk2!82] (0,0.17) rectangle (35.76,0.63);
+    \node[right] at (8.27,1.3) {\textbf{8.3\%}};
+    \node[right] at (35.76,0.4) {\textbf{35.8\%}};
+    \node[below] at (0,0.17) {0\%};
+    \node[below] at (100,0.17) {100\%};
+  \end{tikzpicture}
+
+  \vspace{0.6em}
+  \raggedright
+  There were 208 long calls out of 2,514. Those same 208 calls took
+  about 63 of the 176 total service hours recorded for these calls.
+\end{frame}
+
+\begin{frame}{Did the mix of services change?}
+  \small
+  The bank records six service types. We combine them into two groups
+  for a first comparison:
+
+  \begin{itemize}
+    \item \textbf{Regular banking:} standard banking (\texttt{PS}) and banking
+      in English (\texttt{PE}).
+    \item \textbf{Other services:} internet help (\texttt{IN}), stock exchange
+      (\texttt{NE}), prospective customers (\texttt{NW}), and callbacks put
+      on hold (\texttt{TT}).
+  \end{itemize}
+
+  \vspace{0.25em}
+  \centering
+  \begin{tabular}{@{}llrr@{}}
+    \toprule
+    Dates (Nov.) & Service group & Share of calls & Long within group\\
+    \midrule
+    1--14 & Regular banking & 70.4\% & 4.2\%\\
+          & Other services  & 29.6\% & 8.9\%\\[0.2em]
+    15--30 & Regular banking & 68.3\% & 6.7\%\\
+           & Other services  & 31.7\% & 11.7\%\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.55em}
+  \raggedright
+  Could the change in the mix alone explain the rise in long services?
+\end{frame}
+
+\begin{frame}{Can the service mix explain the rise in long calls?}
+  \small
+  Use the mix from \textbf{15--30 November}: 68.3\% regular banking
+  and 31.7\% other services. Keep the share of long calls \textbf{within
+  each group} at its 1--14 November value.
+
+  \[
+    \underbrace{0.683 \times 4.2\%}_{\text{Regular banking}}
+    + \underbrace{0.317 \times 8.9\%}_{\text{Other services}}
+    \approx 5.7\%.
+  \]
+
+  \vspace{0.15em}
+  \centering
+  \begin{tabular}{@{}lr@{}}
+    \toprule
+    & Share lasting at least 10 min\\
+    \midrule
+    Observed on 1--14 November & 5.6\%\\
+    If only the mix changed    & 5.7\%\\
+    Observed on 15--30 November & 8.3\%\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.65em}
+  \raggedright
+  Changing the mix alone adds about 0.1 percentage points. The observed
+  rise was 2.7 points, and long calls became more common within both groups.
+\end{frame}
+
+\section{Simulate and decide}
+
+\begin{frame}{Pair the simulations, one draw per caller}
+  \small
+  Generate one morning of arrivals as in Week 3. Draw a fresh uniform
+  number between 0 and 1 for \textbf{each caller}. Each model converts
+  that draw to a duration.
+
+  \vspace{0.5em}
+  Here are three example callers. A draw of 0.95 picks the duration
+  by which 95\% of services finish under each model.
+
+  \vspace{0.5em}
+  \centering
+  \begin{tabular}{@{}lrrrr@{}}
+    \toprule
+    & & \multicolumn{3}{c}{Service duration (minutes)}\\
+    \cmidrule(l){3-5}
+    Caller & Draw & Week 3 exp. & Fitted exp. & Fitted lognormal\\
+    \midrule
+    1 & 0.25 & 1.73 & 0.99 & 1.10\\
+    2 & 0.60 & 5.50 & 3.14 & 2.72\\
+    3 & 0.95 & 17.97 & 10.27 & 10.61\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.6em}
+  \raggedright
+  \textbf{Recall Week 3:} pairing helps reduce random variation in the
+  comparison. Across models, share the arrivals and each caller's draw.
+  Within a model, share the arrivals and service durations at 16 and
+  17 agents. Repeat for 200 mornings.
+\end{frame}
+
+\begin{frame}{How does the staffing comparison change?}
+  \small
+  Compute one mean wait per morning for each staffing level. The table
+  averages those 200 morning means and their paired differences, in minutes.
+
+  \vspace{0.7em}
+  \centering
+  \begin{tabular}{@{}lrrrl@{}}
+    \toprule
+    Service input & Wait 16 & Wait 17 & Gain & 95\% MC interval\\
+    \midrule
+    Week 3 exponential & 4.354 & 2.749 & 1.604 & [1.413, 1.796]\\
+    Fitted exponential & 0.023 & 0.010 & 0.013 & [0.008, 0.017]\\
+    Fitted lognormal   & 0.021 & 0.009 & 0.011 & [0.008, 0.015]\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.6em}
+  \raggedright
+  The fitted service times give much smaller waits in this scenario.
+  The intervals measure Monte Carlo error with the input models fixed.
+
+  \vspace{0.4em}
+  \textbf{Queue assumptions.} We count each entry to the automated phone
+  menu as a request for an agent, even though some callers leave before
+  reaching an agent. In the simulation, callers wait until served.
+\end{frame}
+
+\begin{frame}{Where would one extra agent make more difference?}
+  The Week 3 reference demand is 39.85 calls per 15 minutes. Both fitted
+  service models use a mean of 3.43 minutes.
+  \[
+    \frac{39.85}{15} \times 3.43
+    \approx 9.11 \quad \text{agent minutes per minute}.
+  \]
+
+  \begin{itemize}
+    \item With 16 agents, reference demand leaves about 6.9 agent minutes
+      of spare capacity per minute.
+    \item With 10 agents, it leaves about 0.9.
+  \end{itemize}
+
+  Use this average to choose a second experiment at \textbf{10 versus 11
+  agents}. Simulated mornings can have quieter or busier periods than the
+  reference demand.
+\end{frame}
+
+\begin{frame}{The extra agent helps more at lower staffing}
+  \small
+  For each staffing level, average the mean waiting time over the same
+  200 simulated mornings.
+
+  \vspace{0.6em}
+  \centering
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    & \multicolumn{2}{c}{Mean waiting time (seconds)}\\
+    \cmidrule(l){2-3}
+    Agents & Fitted exponential & Fitted lognormal\\
+    \midrule
+    16 &   1.38 &   1.26\\
+    17 &   0.62 &   0.57\\
+    \addlinespace
+    10 & 152.77 & 151.88\\
+    11 &  64.45 &  66.08\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.65em}
+  \raggedright
+  Going from 16 to 17 saves \textbf{less than one second} of mean wait.
+  Going from 10 to 11 saves \textbf{about 86--88 seconds}.
+\end{frame}
+
+\begin{frame}{Lab: follow service times into the staffing decision}
+  \begin{enumerate}
+    \item Fit both service models and check their predictions on later dates.
+    \item Measure how much work comes from long services.
+    \item Calculate how much of the rise in long services the mix explains.
+    \item Compare the gains from adding an agent at 10 and at 16 agents.
+  \end{enumerate}
+
+  \vspace{0.45em}
+  Optional LLM audit. Predict what happens if you swap the group rates
+  first and then the service mix. Check the prediction in your notebook.
+\end{frame}
+
+\begin{frame}{From individual inputs to the full bank case}
+  \small
+  \begin{tabular}{@{}lp{8.5cm}@{}}
+    \textbf{Week 4} & Fit service durations and record where the candidates miss.\\[0.5em]
+    \textbf{Week 5} & Estimate actual agent demand and caller patience. Add abandonment to the queue.\\[0.5em]
+    \textbf{Week 6} & Check waiting and abandonment on later mornings. Compare one staffing change under the models that remain credible.\\[0.5em]
+    \textbf{Week 7} & Present the complete workflow, evidence for the decision, and any remaining limits.\\
+  \end{tabular}
+
+  \vspace{0.65em}
+  \href{https://github.com/NaitsabesMue/stochastic-modeling-simulation-ds}{Course repository and Python labs}
+\end{frame}
+
+\end{document}

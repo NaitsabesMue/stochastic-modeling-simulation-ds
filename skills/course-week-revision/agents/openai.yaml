@@ -1,0 +1,4 @@
+interface:
+  display_name: "Course Week Revision"
+  short_description: "Revise course weeks into coherent teaching units"
+  default_prompt: "Use $course-week-revision to revise the next course week while preserving my manual edits."

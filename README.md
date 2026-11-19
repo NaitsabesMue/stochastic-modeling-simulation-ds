@@ -6,7 +6,7 @@ Some questions about a real system cannot be answered from its existing records.
 
 Queueing systems are the worked setting. Students learn to describe random arrivals and service, fit model inputs to data, check simulation uncertainty, compare models, and explain which assumptions drive a recommendation. Coding is in Python. LLMs may be used to suggest code or challenge a theoretical argument; their output must be checked against a derivation, a reproducible computation, or an independent source. Never upload raw customer records or student work to an LLM.
 
-The course has seven three-hour hands-on sessions and ends in a project. Basic Python is required; some probability and statistics help. Week 1 is complete on `main`, and Week 2 is under active revision. Weeks 3–7 have the outline below, but their materials still need to be developed. Previous slides, notebooks, case data, and evaluation files are preserved on the `2025-26` branch.
+The course has seven three-hour hands-on sessions and ends in a project. Basic Python is required. Some probability and statistics help. The slides and notebooks for Weeks 1–4 are linked below. The `2025-26` branch preserves the previous course materials.
 
 ## Course route
 
@@ -15,10 +15,16 @@ The course has seven three-hour hands-on sessions and ends in a project. Basic P
 | 1 | What do the records show, and what can they not answer? | Diagnose starting level; inspect real arrivals; test a first Poisson model. |
 | 2 | How do arrivals and limited servers create a queue? | Build a queue simulation in plain Python. |
 | 3 | Is a simulated difference larger than simulation noise? | Quantify uncertainty. |
-| 4 | Which input distributions are supported by the records? | Estimate and check model inputs. |
-| 5 | Where does the model fail, and which alternative helps? | Validate and select a model. |
-| 6 | Would a proposed change improve the system? | Run and interpret policy experiments. |
-| 7 | What decision can the evidence support? | Present and critique projects. |
+| 4 | How long does a human agent stay busy? | Fit and check service distributions, then measure how they affect the Week 3 staffing scenario. |
+| 5 | Who requests an agent, and how long will they wait? | Build an arrival profile for agent requests, estimate patience from waits and abandonments, and add abandonment to the queue. |
+| 6 | Does the combined queue reproduce observed mornings? | Compare predicted and observed waits and abandonment. Compare model variants and test one staffing change. |
+| 7 | What decision can the evidence support? | Present and review the complete workflow, sensitivity checks, and conditions for a staffing decision. |
+
+### The final AnonymousBank case
+
+By Week 7, the worked case should trace one morning staffing question from records to a decision. Start with how calls reach an agent. Fit arrival, service, and patience inputs, state the routing and staffing assumptions, and check the queue against later observed mornings. Then compare staffing policies using paired simulations and report how both Monte Carlo error and changes to the model affect the conclusion. If the evidence leaves the choice unresolved, identify what measurement would resolve it.
+
+Week 5 should deliver a working queue with abandonment and reserve later dates for the combined model check. Week 6 should deliver the model comparison and staffing experiment. Week 7 uses these results for the final review. If an eighth session is available, use it to stress test the conclusion across call types or time windows. The main analysis fits within seven sessions.
 
 Each session begins with a lecture and discussion with **screens closed, phones off, and no side conversations**. Students then work on notebooks and exercises on their own computers. They may discuss the work with their group, but must not copy code or answers. End-of-session printed multiple-choice quizzes take place in the **last ten minutes**, individually without devices or LLMs. The number and schedule of graded quizzes are **to be confirmed**. Quiz sheets and keys are kept outside Git. Week 1 begins with an **ungraded paper diagnostic** so teaching pace can respond to the class.
 
@@ -44,6 +50,22 @@ The lab uses a non-identifying 15-minute arrival-count extract from the [Technio
 The lab follows the lecture: inspect the 96 unaveraged counts from 1 November, recall the Poisson process, fit one baseline rate to all 2,880 November intervals, check the simulator against theoretical predictions, then compare with the observed data. Time-of-day variation comes first; differences between weekdays are a further check requiring multiple days.
 
 Save your completed notebook and notes under ignored `students/`; never commit or push student work. Start Jupyter from the repository root when running that copy so the loader finds the data. Open the lab in Jupyter or VS Code with a Python 3 kernel. Its code uses the Python standard library, and the included aggregate CSV is enough for week 1. No raw-data download is needed to run it.
+
+## Week 2 materials
+
+- [Lecture slides on queues and capacity](slides/lecture2_queue_basics.pdf)
+- [Python lab on building a queue simulator](notebooks/lecture2_queueing.ipynb)
+
+## Week 3 materials
+
+- [Lecture slides on Monte Carlo error and sensitivity](slides/lecture3_error_control_sensitivity.pdf)
+- [Python lab on repeated staffing comparisons](notebooks/lecture3_simulation_error_control.ipynb)
+
+## Week 4 materials
+
+- [Lecture slides on fitting service durations](slides/lecture4_parameter_estimation.pdf)
+- [Python lab on fitting and checking service models](notebooks/lecture4_parameter_estimation.ipynb)
+- [Service duration extract and provenance](data/README.md#week-4-service-duration-summary)
 
 ## Private material
 

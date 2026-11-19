@@ -6,3 +6,4 @@
 - Review `git diff --cached --name-only` before every commit. Do not use `git add .` in this repository.
 - Keep API keys and other credentials out of all tracked files. Use environment variables.
 - Student-facing materials belong on `main`. The `2025-26` branch archives the previous course. Do not copy student work or private grading records to either branch.
+- For weekly course revisions, read and follow `skills/course-week-revision/SKILL.md`. Update that skill when the review establishes a reusable teaching or production rule.
