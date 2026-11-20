@@ -12,6 +12,7 @@ Use this checklist for a complete weekly revision. Adapt it to the week's actual
 - Label plots with units and the exact aggregation. Say whether a point is one observation, a mean over days, a moving average, or a simulation result.
 - If a model is fitted to pooled data, name what was pooled and why the baseline is intentionally simple.
 - Show important simulation results rather than only telling students what they should see.
+- Define each outcome measure beside the first results that use it. Give a worked value when a measure needs its own slide.
 - Distinguish a simulator check from a model validation check.
 - Preserve citations, dataset provenance, privacy limits, and the repository link.
 - Compile and inspect the PDF after every material layout change.
@@ -25,6 +26,7 @@ Use this checklist for a complete weekly revision. Adapt it to the week's actual
 - Ask students to predict or explain before showing an answer when that reveals understanding.
 - Make prompts concrete: name the output, comparison, units, and evidence expected.
 - Include at least two substantive, scaffolded code-completion blocks in a hands-on notebook. Remove code at steps central to the week's learning, state the required inputs and outputs, and leave enough surrounding code to test the result.
+- Spread the completion blocks across the workflow. Give students a calculation to implement in later comparisons, with a small example they can check before running the full analysis.
 - Explain Python expressions that are likely to be unfamiliar, especially indexing, binning, generators, and random-number logic.
 - For calculations on binned data, identify which bins go into each total before asking students to write the slices.
 - Use deterministic seeds for reproducibility, then vary seeds to teach simulation noise. Never tune a seed to resemble observed data.

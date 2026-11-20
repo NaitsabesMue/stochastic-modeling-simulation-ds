@@ -6,7 +6,7 @@ Some questions about a real system cannot be answered from its existing records.
 
 Queueing systems are the worked setting. Students learn to describe random arrivals and service, fit model inputs to data, check simulation uncertainty, compare models, and explain which assumptions drive a recommendation. Coding is in Python. LLMs may be used to suggest code or challenge a theoretical argument; their output must be checked against a derivation, a reproducible computation, or an independent source. Never upload raw customer records or student work to an LLM.
 
-The course has seven three-hour hands-on sessions and ends in a project. Basic Python is required. Some probability and statistics help. The slides and notebooks for Weeks 1–4 are linked below. The `2025-26` branch preserves the previous course materials.
+Sessions run for three hours. Lecture 6 is the final meeting and includes the project review. Basic Python is required. Some probability and statistics help. The slides and notebooks for Lectures 1–5 are linked below. The `2025-26` branch preserves the previous course materials.
 
 ## Course route
 
@@ -16,15 +16,12 @@ The course has seven three-hour hands-on sessions and ends in a project. Basic P
 | 2 | How do arrivals and limited servers create a queue? | Build a queue simulation in plain Python. |
 | 3 | Is a simulated difference larger than simulation noise? | Quantify uncertainty. |
 | 4 | How long does a human agent stay busy? | Fit and check service distributions, then measure how they affect the Week 3 staffing scenario. |
-| 5 | Who requests an agent, and how long will they wait? | Build an arrival profile for agent requests, estimate patience from waits and abandonments, and add abandonment to the queue. |
-| 6 | Does the combined queue reproduce observed mornings? | Compare predicted and observed waits and abandonment. Compare model variants and test one staffing change. |
-| 7 | What decision can the evidence support? | Present and review the complete workflow, sensitivity checks, and conditions for a staffing decision. |
+| 5 | What changes when callers can leave the queue? | Add abandonment using the Week 3–4 arrival generator. Fit exponential gaps from timestamps, compare daily variation and morning resampling, and test service type. |
+| 6 | What staffing decision can the full model support? | Check the combined queue against December mornings, compare one staffing change, and review the complete project. |
 
 ### The final AnonymousBank case
 
-By Week 7, the worked case should trace one morning staffing question from records to a decision. Start with how calls reach an agent. Fit arrival, service, and patience inputs, state the routing and staffing assumptions, and check the queue against later observed mornings. Then compare staffing policies using paired simulations and report how both Monte Carlo error and changes to the model affect the conclusion. If the evidence leaves the choice unresolved, identify what measurement would resolve it.
-
-Week 5 should deliver a working queue with abandonment and reserve later dates for the combined model check. Week 6 should deliver the model comparison and staffing experiment. Week 7 uses these results for the final review. If an eighth session is available, use it to stress test the conclusion across call types or time windows. The main analysis fits within seven sessions.
+Lecture 5 builds the queue with abandonment and checks the individual inputs using later November records. In the final meeting, bring the fitted arrival, service, and patience models together and state the routing and staffing assumptions. Check the combined queue against observed December mornings. Compare one staffing change using paired simulations and report how Monte Carlo uncertainty and a plausible model variation affect the conclusion. Use those results in the project review to state what staffing decision the evidence supports. If the choice remains unresolved, identify the measurement that would help resolve it.
 
 Each session begins with a lecture and discussion with **screens closed, phones off, and no side conversations**. Students then work on notebooks and exercises on their own computers. They may discuss the work with their group, but must not copy code or answers. End-of-session printed multiple-choice quizzes take place in the **last ten minutes**, individually without devices or LLMs. The number and schedule of graded quizzes are **to be confirmed**. Quiz sheets and keys are kept outside Git. Week 1 begins with an **ungraded paper diagnostic** so teaching pace can respond to the class.
 
@@ -66,6 +63,12 @@ Save your completed notebook and notes under ignored `students/`; never commit o
 - [Lecture slides on fitting service durations](slides/lecture4_parameter_estimation.pdf)
 - [Python lab on fitting and checking service models](notebooks/lecture4_parameter_estimation.ipynb)
 - [Service duration extract and provenance](data/README.md#week-4-service-duration-summary)
+
+## Lecture 5 materials
+
+- [Lecture slides on abandonment, arrival times, and service type](slides/lecture5_evaluation_exercise.pdf)
+- [Python lab on abandonment and the original call log](notebooks/lecture5_evaluation_exercise.ipynb)
+- [Local data setup and record selection](data/README.md#lecture-5-original-morning-records)
 
 ## Private material
 

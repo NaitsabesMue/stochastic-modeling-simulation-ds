@@ -1,0 +1,524 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usetheme{AMU}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{calc,positioning}
+
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox to .88\paperwidth{%
+    \hspace*{1em}{\color{AMU_dk2}\footnotesize\insertshorttitle}%
+    \hfil%
+    {\color{AMU_dk2}\footnotesize\insertframenumber{} / \inserttotalframenumber}%
+  }%
+  \vskip1ex%
+}
+
+\title[Stochastic Models and Simulation]{Stochastic Models and Simulation}
+\subtitle{Lecture 5: abandonment and the original call log}
+\author{Sebastian M\"uller}
+\date{2026/27}
+
+\begin{document}
+
+\begin{frame}
+  \renewcommand{\AMUtitlebar}{%
+    \noindent\colorbox{AMU_dk2}{\rule{0pt}{1.2ex}\hspace{\dimexpr0.36\linewidth-2\fboxsep\relax}}%
+    \colorbox{AMU_lt2}{\rule{0pt}{1.2ex}\hspace{\dimexpr0.28\linewidth-2\fboxsep\relax}}%
+    \colorbox{AMU_acc6}{\rule{0pt}{1.2ex}\hspace{\dimexpr0.36\linewidth-2\fboxsep\relax}}%
+  }
+  \titlepage
+\end{frame}
+
+\begin{frame}{What changes when callers can leave the queue?}
+  In Lecture 4, we modelled how long an agent spends with a caller.
+  The simulated queue served every request.
+
+  \vspace{0.7em}
+  \begin{block}{Today's question}
+    How much does allowing callers to hang up change the queue outcomes?
+  \end{block}
+
+  \vspace{0.55em}
+  Keep arrivals and service fixed while we add abandonment. Then look
+  in the original call log for other ways to improve the model.
+\end{frame}
+
+\section{Observe}
+
+\begin{frame}{Which calls count as requests for an agent?}
+  \centering
+  \begin{tikzpicture}[
+    box/.style={draw=AMU_dk2,rounded corners,text width=2.85cm,
+      minimum height=0.78cm,align=center,font=\small,fill=AMU_dk2!6}]
+    \node[box] (menu) at (-3.55,0) {Automated phone menu};
+    \node[box] (queue) at (0,1.1) {Joins agent queue};
+    \node[box] (direct) at (0,0) {Goes directly to service};
+    \node[box] (leave) at (0,-1.1) {Leaves before the queue};
+    \node[box,fill=AMU_lt2] (request) at (3.55,0.55) {Count an agent request};
+    \draw[->,thick] (menu.east) -- (queue.west);
+    \draw[->,thick] (menu.east) -- (direct.west);
+    \draw[->,thick] (menu.east) -- (leave.west);
+    \draw[->,thick] (queue.east) -- (request.west);
+    \draw[->,thick] (direct.east) -- (request.west);
+  \end{tikzpicture}
+
+  \vspace{0.65em}
+  \raggedright\small
+  Use the queue start for queued calls. If service starts with no recorded
+  queue start, count the request at service start with zero wait.
+  A caller who hangs up \emph{after joining} counts as an abandonment.
+\end{frame}
+
+\begin{frame}{What do we keep from each call?}
+  \small
+  We read the original call records locally. Each request keeps its
+  recorded time to the second. Two requests in the same second both count.
+
+  \vspace{0.6em}
+  \centering
+  \begin{tabular}{@{}lr@{}}
+    \toprule
+    Requests from 09:00 to before 11:00 & 3,115\\
+    \midrule
+    Served without a recorded queue start & 767\\
+    Joined the queue and were served & 1,778\\
+    Joined the queue and abandoned & 565\\
+    Joined the queue, missing service start & 5\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.6em}
+  \raggedright
+  These are the ten fit mornings, Sunday--Thursday, 1--14 November.
+  Keep all 3,115 request times. Use the 3,110 verified outcomes to study waits.
+
+  \vspace{0.35em}
+  {\scriptsize Source: \href{https://seelab.net.technion.ac.il/data/}{Technion SEE Lab, AnonymousBank}.}
+\end{frame}
+
+\section{Model patience}
+
+\begin{frame}{What can we learn about patience?}
+  Patience is how long a caller would wait before leaving the queue.
+
+  \begin{center}
+    \begin{tikzpicture}[x=0.15cm,y=0.7cm,font=\small]
+      \node[above] at (0,1.4) {Join at 0 s};
+      \node[left] at (-1,0.95) {Caller 1};
+      \node[left] at (-1,0) {Caller 2};
+      \draw[densely dotted,gray] (0,-0.18) -- (0,1.35);
+      \draw[very thick,AMU_dk2] (0,0.95) -- (40,0.95);
+      \fill[AMU_dk2] (40,0.95) circle (2pt) node[right,text=black] {Leaves at 40 s};
+      \draw[very thick,AMU_dk2] (0,0) -- (25,0);
+      \fill[AMU_dk2] (25,0) circle (2pt) node[below,text=black] {Served at 25 s};
+      \draw[thick,densely dotted,gray,->] (25.5,0) -- (40,0)
+        node[right,text=black] {Patience unknown};
+    \end{tikzpicture}
+  \end{center}
+
+  Caller 1's patience was 40 seconds. Caller 2 was willing to wait at
+  least 25 seconds. We call that observation \textbf{right-censored}.
+
+  Both calls contribute waiting time. Only caller 1 contributes an abandonment.
+\end{frame}
+
+\begin{frame}{Check the abandonment rule by hand}
+  \small
+  One agent is free at time zero. Times are in seconds. A caller leaves
+  if the earliest possible service start would come after their patience
+  expires. At a tie, serve the caller.
+
+  \vspace{0.65em}
+  \centering
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Caller & Arrives & Service takes & Patience\\
+    \midrule
+    1 &  0 & 80 & 10\\
+    2 & 10 & 500 & 20\\
+    3 & 80 &  10 &  5\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.65em}
+  \raggedright
+  Caller 1 starts immediately. Caller 2 would have to wait 70 seconds.
+  When does caller 2 leave? When can caller 3 start?
+\end{frame}
+
+\begin{frame}{Fit a constant rate of leaving}
+  Assume exponential patience. A caller still waiting has a constant
+  abandonment rate $\theta$ per second. Treat their patience and the
+  time at which an agent becomes available as independent.
+
+  \[
+    \widehat{\theta} =
+      \frac{\text{abandonments}}{\text{total seconds spent waiting}}
+    = \frac{565}{217{,}565}.
+  \]
+
+  The fitted mean patience is $1/\widehat{\theta}\approx385$ seconds.
+  The denominator includes waiting time from callers who were served.
+
+  \vspace{0.4em}
+  \textbf{Discuss.} Callers who abandoned waited 66 seconds on average.
+  Why would using only their waits give a different answer?
+\end{frame}
+
+\begin{frame}{How does the abandonment rate change with waiting time?}
+  \small
+  Split waits into successive minutes. A caller who leaves after 80 seconds
+  contributes 60 waiting seconds to minute one, 20 to minute two, and one
+  abandonment in minute two.
+
+  \vspace{0.6em}
+  \centering
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Time since joining & Abandoned & Seconds waiting & Rate per minute\\
+    \midrule
+    Minute 1 & 347 & 102,073 & 0.204\\
+    Minute 2 & 132 & 53,362 & 0.148\\
+    Minute 3 &  41 & 28,576 & 0.086\\
+    Minute 4 &  21 & 15,356 & 0.082\\
+    From 4 minutes & 24 & 18,198 & 0.079\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.65em}
+  \raggedright
+  The rate drops through minute three, then stays close to
+  0.08 per minute of time spent waiting.
+\end{frame}
+
+\begin{frame}{Choose three patience rates}
+  \small
+  Fit the candidates on 1--14 November. Score them on the 3,581
+  requests with known outcomes on 15--30 November.
+  The log likelihood uses each wait and how it ended. The table shows
+  the gain over one rate.
+
+  \vspace{0.55em}
+  \centering
+  \begin{tabular}{@{}lr@{}}
+    \toprule
+    Model and change points & Log-likelihood gain\\
+    \midrule
+    One rate & 0.0\\
+    Two rates (1 min) & 95.6\\
+    \textbf{Three rates (1 and 2 min)} & \textbf{147.7}\\
+    Five rates (1, 2, 3, and 4 min) & 151.1\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.55em}
+  \raggedright
+  Three rates capture about 98\% of the gain from five rates.
+  Use $0.204$ in minute one, $0.148$ in minute two, and $0.083$
+  per minute for callers still waiting after two minutes.
+\end{frame}
+
+\section{Simulate}
+
+\begin{frame}{Arrival model A: the Week 3 and 4 generator}
+  \begin{enumerate}
+    \item Set an average arrival rate for the 09:00--11:00 window.
+    \item Multiply it by a random factor drawn once per morning.
+      This lets some mornings be busier than others.
+    \item Draw exponential gaps at that morning's rate until 11:00.
+  \end{enumerate}
+
+  \vspace{0.5em}
+  Earlier fits counted entries to the phone menu. Here we fit the
+  same generator to the number of agent requests on each fit morning.
+  The average rate is 2.60 requests per minute.
+\end{frame}
+
+\begin{frame}{Hold arrivals and service fixed}
+  \begin{enumerate}
+    \item Generate a morning of arrivals with model A.
+    \item Draw each caller's service duration from the lognormal model
+      from Lecture 4, fitted to the original durations.
+    \item Draw how long each caller is willing to wait.
+  \end{enumerate}
+
+  \vspace{0.5em}
+  Start at 09:00 with idle agents and a single queue in arrival order.
+  Share arrivals and service times across the patience models so we
+  can compare the outcomes on the same mornings.
+\end{frame}
+
+\begin{frame}{How many agents were on calls?}
+  \small
+  About 2.60 requests arrive each minute and need 3.43 minutes of
+  service each, on average. That brings 8.9 minutes of work per minute
+  if everyone is served.
+
+  \vspace{0.6em}
+  \centering
+  \begin{tabular}{@{}lr@{}}
+    \toprule
+    Recorded activity, 09:00--11:00 & Observed\\
+    \midrule
+    Agents who handled a call, per morning & 10--13\\
+    Peak agents on calls at once, per morning & 9--12\\
+    Mean number of agents on calls & 7.1\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.6em}
+  \raggedright
+  More than nine agents were on calls at once on nine of ten fit
+  mornings. Nine gives us a low-staffing scenario for the experiment.
+\end{frame}
+
+\begin{frame}{How does abandonment change the simulated queue?}
+  \small
+  Simulate 600 mornings per patience rule, using model A and nine agents
+  throughout.
+
+  \vspace{0.55em}
+  \centering
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Scenario & Abandoned & Served within 60 s & Mean wait\\
+    \midrule
+    Observed 1--14 Nov  & 17.4\% & 52.0\% &  71.5 s\\
+    No abandonment     &  0.0\% & 46.3\% & 248.9 s\\
+    One patience rate  &  9.8\% & 69.5\% &  36.6 s\\
+    Three patience rates & 10.2\% & 70.6\% &  35.6 s\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.4em}
+  \raggedright
+  {\footnotesize Both percentages use all requests with a known outcome.
+  Mean wait uses served callers, including zero waits. Each morning has
+  equal weight.\par}
+
+  \vspace{0.45em}
+  Nine is the lowest observed daily peak of agents on calls. Even at
+  this staffing level, both fitted patience models predict about half
+  the observed mean wait. What else in the call log could matter?
+\end{frame}
+
+\section{Inspect the original records}
+
+\begin{frame}{What does the original call log contain?}
+  \small
+  One row per call. Here are the 17 original columns.
+
+  \vspace{0.65em}
+  \begin{tabular}{@{}ll@{}}
+    \toprule
+    What it records & Field names\\
+    \midrule
+    Day & \texttt{date}\\
+    Record identifiers & \texttt{call\_id, customer\_id, vru+line}\\
+    Automated menu & \texttt{vru\_entry, vru\_exit, vru\_time}\\
+    Category and priority & \texttt{type, priority}\\
+    Queue & \texttt{q\_start, q\_exit, q\_time}\\
+    Service & \texttt{ser\_start, ser\_exit, ser\_time, server}\\
+    Call outcome & \texttt{outcome}\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.65em}
+  \href{https://github.com/NaitsabesMue/stochastic-modeling-simulation-ds/blob/main/data/anonymousbank_data_guide.md}{Redacted example rows and field definitions}
+\end{frame}
+
+\begin{frame}{Which fields could improve the queue model?}
+  \begin{itemize}
+    \item \textbf{When requests arrive.} Repeat the exponential fit and
+      the morning resampling with the recorded times.
+    \item \textbf{How long service takes.} Fit a duration model for each
+      recorded service category.
+    \item \textbf{Who moves to the front.} Check whether the priority
+      field explains differences in queue outcomes.
+  \end{itemize}
+
+  In class, try timestamps and service type. The notebook also examines
+  day of week, the automated menu, priority, and recorded agent activity.
+\end{frame}
+
+\section{Use arrival timestamps}
+
+\begin{frame}{Fit an exponential to the observed arrival gaps}
+  Take the difference between successive request times on each morning.
+  For example, three recorded times give two gaps.
+
+  \[
+    \text{09:00:12}\ \xrightarrow{\ 24\text{ s}\ }
+    \text{09:00:36}\ \xrightarrow{\ 58\text{ s}\ }\ \text{09:01:34}
+  \]
+
+  Fit the exponential's mean to the average of the 3,105 complete gaps
+  from the ten fit mornings.
+
+  \[
+    \text{Fitted mean gap} =
+      \frac{71{,}445\text{ seconds}}{3{,}105\text{ gaps}}
+      \approx 23.01\text{ seconds.}
+  \]
+
+  The fitted rate is 2.608 requests per minute. The earlier count fit
+  gave 2.596.
+\end{frame}
+
+\begin{frame}{What does the daily factor add?}
+  \small
+  Use the rate fitted to timestamps. First use it every morning.
+  Then multiply it by a fresh morning factor, as in Week 3.
+  Compare both with observations from 15--30 November.
+
+  \vspace{0.6em}
+  \centering
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Arrival model & Mean gap & Gap SD & Morning count SD\\
+    \midrule
+    Observed 15--30 Nov & 23.9 s & 24.7 s & 38.5\\
+    Earlier counts + daily factor & 23.3 s & 23.6 s & 41.5\\
+    Fitted gaps, fixed rate & 23.0 s & 23.0 s & 17.5\\
+    Fitted gaps + daily factor & 23.2 s & 23.5 s & 41.7\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.55em}
+  \raggedright
+  The gap statistics are similar across the fits. The daily factor
+  brings the variation in total requests per morning closer to the data.
+\end{frame}
+
+\begin{frame}{Arrival model B: resample the same morning two ways}
+  Pick one of the ten fit mornings at random. Use it for both versions
+  below. Each repetition draws again from all ten mornings.
+
+  \begin{itemize}
+    \item \textbf{15-minute counts.} Keep the count in each interval.
+      Place that many arrivals uniformly inside it.
+    \item \textbf{Timestamps.} Replay the recorded times in order.
+      Keep both requests when they arrive in the same second.
+  \end{itemize}
+
+  Both versions keep the same quarter-hour totals. The gaps between
+  requests can differ.
+\end{frame}
+
+\begin{frame}{Does the arrival model change the staffing result?}
+  \small
+  The two resampling versions share the same 600 sampled mornings,
+  service times, and patience draws. Timing within the quarter-hours changes.
+
+  \vspace{0.65em}
+  \centering
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    \multicolumn{4}{@{}l@{}}{Share served within 60 seconds}\\
+    Arrival input & 9 agents & 10 agents & Gain\\
+    \midrule
+    A: Counts + daily factor & 70.6\% & 81.4\% & 10.8 pp\\
+    A: Fitted gaps, fixed rate & 70.5\% & 82.1\% & 11.6 pp\\
+    A: Fitted gaps + daily factor & 70.2\% & 81.1\% & 10.9 pp\\
+    B: 15-minute counts & 65.8\% & 77.7\% & 11.9 pp\\
+    B: Timestamps & 65.6\% & 77.8\% & 12.2 pp\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.65em}
+  \raggedright
+  Within Model B, the gain with timestamps is 0.27 percentage points
+  higher. The paired 95\% Monte Carlo interval for the difference is
+  $[-0.16,\;0.69]$ points.
+
+  \vspace{0.5em}
+  Ten agents meet the illustrative 75\% target across all versions.
+\end{frame}
+
+\section{Use service type}
+
+\begin{frame}{Does service type help predict duration?}
+  \small
+  Fit the lognormal from Lecture 4 to the retained services on 1--14 November.
+  The pooled fit predicts a mean of 205.7 seconds for every type.
+  Compare a fit for each type with the observed means on 15--30 November.
+
+  \vspace{0.55em}
+  \centering
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Service type & Fit count & Fit mean (s) & Later mean (s)\\
+    \midrule
+    PS: Regular banking & 1,770 & 184.1 & 233.9\\
+    PE: Banking in English & 10 & 217.5 & 300.2\\
+    IN: Internet consulting & 128 & 382.6 & 428.7\\
+    NE: Stock-exchange activity & 389 & 294.1 & 305.0\\
+    NW: Prospective customer info & 204 & 130.7 & 104.6\\
+    TT: Returned call put on hold & 29 & 81.8 & 156.7\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.55em}
+  \raggedright
+  Compare each fitted mean with its later November mean. Where does
+  the type help? Which estimate rests on very few calls?
+\end{frame}
+
+\begin{frame}{Does service type change the staffing comparison?}
+  \small
+  Keep the resampled timestamps and patience fixed. Use each request's
+  recorded service type. Share the random draws for the pooled and
+  type-specific durations.
+
+  \vspace{0.65em}
+  \centering
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    \multicolumn{4}{@{}l@{}}{Share served within 60 seconds}\\
+    Service model & 9 agents & 10 agents & Gain\\
+    \midrule
+    Pooled services & 65.6\% & 77.8\% & 12.2 pp\\
+    Service by type & 66.8\% & 78.9\% & 12.2 pp\\
+    \bottomrule
+  \end{tabular}
+
+  \vspace{0.65em}
+  \raggedright
+  Fitting by service type changes the estimated gain by $-0.01$ percentage
+  points (paired 95\% Monte Carlo interval $[-0.41,\;0.39]$ points).
+  Ten agents meet the illustrative 75\% target under either model.
+\end{frame}
+
+\begin{frame}{What will we finish in Lecture 6?}
+  In our final meeting, we take the bank case from the fitted inputs
+  to a staffing conclusion.
+
+  \begin{enumerate}
+    \item Check the combined queue against December mornings. Compare
+      abandonment, service within a minute, and mean wait among callers served.
+    \item Compare one staffing change using paired simulations. Report
+      the gain and its uncertainty.
+    \item Review the project. State what staffing decision the evidence
+      supports or which observation would help resolve the choice.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{In the lab}
+  \begin{enumerate}
+    \item Fit patience and test the abandonment rule.
+    \item Inspect the original call log.
+    \item Compare timings and service types, one change at a time.
+    \item Record one mismatch to investigate in the final meeting.
+  \end{enumerate}
+
+  \vspace{0.6em}
+  \href{https://github.com/NaitsabesMue/stochastic-modeling-simulation-ds}{Course repository and Python lab}
+\end{frame}
+
+\end{document}

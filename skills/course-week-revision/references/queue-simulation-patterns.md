@@ -60,6 +60,8 @@ State that the infinite-horizon M/M/c queue has a stationary distribution exactl
 
 Apply the criterion to the scenario in a separate step. Use it to identify a small range of staffing levels around the capacity boundary. Simulate that range with common arrival and service inputs, then focus the marginal comparison on adjacent staffing levels. This lets theory locate the informative experiment and simulation describe waiting, queue length, occupancy, and unfinished work.
 
+When service times and resource identifiers are available, check the assumed staffing against recorded activity in the same window. Count each resource once at each time. Distinguish the number of distinct resources recorded across the window, the peak number busy at once, and available capacity including idle resources.
+
 ## Give the LLM a task with value even when the code is correct
 
 Ask the LLM to design minimal edge cases, state predicted schedules, identify workflow failure modes, or propose independent checks. Include cases such as simultaneous arrivals, agent-availability ties, congestion, excess capacity, and invalid inputs when they apply.
