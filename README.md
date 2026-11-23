@@ -24,7 +24,8 @@ During the lab, you can ask an LLM for a test case or use it to examine a step i
 **Thursday 3 December 2026, 2:00–5:00 p.m.**
 
 - **2:00–2:10 p.m.** Complete an individual multiple-choice quiz.
-- **2:10–5:00 p.m.** Work in a group of up to three on a real-world problem. Use the modelling and simulation methods from the course to investigate the problem and explain what your results show.
+- **2:10–4:55 p.m.** Work in a group of up to three on a real-world problem. Use the modelling and simulation methods from the course to investigate the problem and explain what your results show.
+- **4:55–5:00 p.m.** Complete a short check individually on paper, with devices put away. Work through a small simulation case by hand and explain which event changes the result.
 
 The Week 1 entrance diagnostic was ungraded.
 
