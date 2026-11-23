@@ -52,25 +52,28 @@
 \begin{frame}{Which calls count as requests for an agent?}
   \centering
   \begin{tikzpicture}[
-    box/.style={draw=AMU_dk2,rounded corners,text width=2.85cm,
-      minimum height=0.78cm,align=center,font=\small,fill=AMU_dk2!6}]
-    \node[box] (menu) at (-3.55,0) {Automated phone menu};
-    \node[box] (queue) at (0,1.1) {Joins agent queue};
-    \node[box] (direct) at (0,0) {Goes directly to service};
-    \node[box] (leave) at (0,-1.1) {Leaves before the queue};
-    \node[box,fill=AMU_lt2] (request) at (3.55,0.55) {Count an agent request};
+    box/.style={draw=AMU_dk2,rounded corners,text width=2.65cm,
+      minimum height=0.88cm,align=center,font=\small,fill=AMU_dk2!6}]
+    \node[box] (menu) at (-3.6,0) {Automated\\phone menu};
+    \node[box] (queue) at (0,0) {Joins agent queue};
+    \node[box] (service) at (3.6,0) {Starts service};
+    \node[box] (early) at (-3.6,-1.45) {Hangs up\\in the menu};
+    \node[box,fill=AMU_lt2] (abandon) at (0,-1.45) {Hangs up in queue\\(abandonment)};
+    \coordinate (directlevel) at (0,1.12);
     \draw[->,thick] (menu.east) -- (queue.west);
-    \draw[->,thick] (menu.east) -- (direct.west);
-    \draw[->,thick] (menu.east) -- (leave.west);
-    \draw[->,thick] (queue.east) -- (request.west);
-    \draw[->,thick] (direct.east) -- (request.west);
+    \draw[->,thick] (queue.east) -- (service.west);
+    \draw[->,thick] (menu.south) -- (early.north);
+    \draw[->,thick] (queue.south) -- (abandon.north);
+    \draw[->,thick] (menu.north) -- (menu.north |- directlevel)
+      -- node[above,font=\small]{Direct to service} (service.north |- directlevel)
+      -- (service.north);
   \end{tikzpicture}
 
   \vspace{0.65em}
   \raggedright\small
-  Use the queue start for queued calls. If service starts with no recorded
-  queue start, count the request at service start with zero wait.
-  A caller who hangs up \emph{after joining} counts as an abandonment.
+  Count the agent request when the caller joins the queue, even if they
+  later abandon. For direct service, count the request at service start
+  with zero wait.
 \end{frame}
 
 \begin{frame}{What do we keep from each call?}

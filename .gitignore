@@ -28,6 +28,7 @@
 /week01/exit_quiz*
 /data/raw/
 /data/private/
+/skills/
 
 # Legacy locations, in case a local grading script recreates them.
 /submissions/

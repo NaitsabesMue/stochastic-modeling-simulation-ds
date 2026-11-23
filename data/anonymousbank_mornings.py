@@ -25,6 +25,12 @@ class AgentService(NamedTuple):
     service_type: str
 
 
+class MorningActivity(NamedTuple):
+    remaining_service: tuple[int, ...]
+    already_waiting: int
+    peak_busy: int
+
+
 def clock_seconds(clock):
     hour, minute, second = map(int, clock.split(":"))
     return hour * 3600 + minute * 60 + second
@@ -78,3 +84,54 @@ def load_mornings(raw_file: Path):
     for calls in requests.values():
         calls.sort(key=lambda call: call.arrival)
     return requests, services
+
+
+def load_morning_activity(raw_file: Path, days):
+    """Summarize activity at 09:00 and through 11:00 without returning agent IDs."""
+    remaining = {day: {} for day in days}
+    waiting = dict.fromkeys(remaining, 0)
+    busy = {day: {} for day in remaining}
+    with raw_file.open(encoding="latin-1", newline="") as source:
+        reader = csv.DictReader(source, delimiter="\t")
+        if reader.fieldnames != EXPECTED_COLUMNS:
+            raise ValueError("Unexpected AnonymousBank columns")
+        for row in reader:
+            day = datetime.strptime(row["date"].strip(), "%y%m%d").date()
+            outcome = row["outcome"].strip()
+            if day not in remaining or outcome not in {"AGENT", "HANG"}:
+                continue
+
+            queue_start = clock_seconds(row["q_start"])
+            queue_exit = clock_seconds(row["q_exit"])
+            if 0 < queue_start < MORNING_START < queue_exit:
+                waiting[day] += 1
+
+            agent = row["server"].strip()
+            if outcome != "AGENT" or agent.upper() in {"", "NO_SERVER"}:
+                continue
+            start = clock_seconds(row["ser_start"])
+            end = start + int(row["ser_time"])
+            window_start = max(start, MORNING_START)
+            window_end = min(end, MORNING_END)
+            if not start or window_start >= window_end:
+                continue
+            if end % 86_400 != clock_seconds(row["ser_exit"]):
+                raise ValueError(f"Inconsistent service duration on line {reader.line_num}")
+            if start < MORNING_START:
+                remaining[day][agent] = max(remaining[day].get(agent, 0), end - MORNING_START)
+
+            # Mark each agent once per second, even where their recorded calls overlap.
+            if agent not in busy[day]:
+                busy[day][agent] = bytearray(MORNING_SECONDS)
+            left = window_start - MORNING_START
+            right = window_end - MORNING_START
+            busy[day][agent][left:right] = b"\x01" * (right - left)
+
+    return {
+        day: MorningActivity(
+            tuple(sorted(remaining[day].values())),
+            waiting[day],
+            max(map(sum, zip(*busy[day].values(), strict=True)), default=0),
+        )
+        for day in remaining
+    }

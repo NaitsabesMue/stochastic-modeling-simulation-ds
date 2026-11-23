@@ -8,7 +8,7 @@ The extract counts **VRU entries**, not arrivals to an agent queue. It includes 
 
 ## Rebuild and verify
 
-1. Download `AnonymousBank.rar` from the [official data directory](https://see-center.iem.technion.ac.il/databases/AnonymousBank/Data/) into ignored `data/raw/`. The source asks academic users to notify Prof. Avi Mandelbaum or the SEE team and acknowledge the data source in work that uses it; arrange that notification before teaching with the data. Do not commit the raw archive or extracted files.
+1. Download `AnonymousBank.rar` from the [official data directory](https://see-center.iem.technion.ac.il/databases/AnonymousBank/Data/) into ignored `data/raw/`.
 2. Extract the RAR archive into `data/raw/`. On this machine, `bsdtar -xf data/raw/AnonymousBank.rar -C data/raw` produced twelve `*1999.txt` files.
 3. Run `python3 data/build_anonymousbank_week01.py` from the repository root. It validates the November column names, dates, times, and outcomes and rewrites the aggregate deterministically.
 
@@ -52,3 +52,11 @@ The first queue comparison uses Model A for every patience rule. The two Model B
 For the staffing comparison on the ten fit mornings, use the start and end of positive-duration calls with a recorded agent. Count the part of each service that falls between 09:00 and 11:00, including calls that started earlier. For each second, count each agent on a call once, including when their logged services overlap. There are 10–13 distinct recorded agents handling calls per morning. The daily peak ranges from 9 to 12 and exceeds nine on nine mornings. Across the ten windows, an average of 7.1 agents were on calls at any given time. These counts exclude 14 positive-duration service records with no agent recorded. Staffing records would also account for available idle agents.
 
 Service modelling uses individual durations from the same selection as Lecture 4. Services start from 09:00 to before 11:00 and durations of at least 10 seconds contribute their full observed value. Compare a pooled lognormal fit with one fit for each recorded `type`. Fit on 1–14 November and check observed means by type on 15–30 November. December is reserved for the combined queue check in Lecture 6.
+
+## Lecture 6 December check
+
+Extract both `November1999.txt` and `December1999.txt` from the official archive into the Git-ignored `data/raw/` directory. The [download instructions](#rebuild-and-verify) are above. Use the same request and duration selection as in Lecture 5. The November 1–14 records supply the lognormal service fit and three-rate patience fit. Compare the November arrival profiles and service durations with the corresponding December observations. This comparison uses 10 fit mornings and 22 December mornings.
+
+For the queue check and staffing experiment, draw from the 22 December mornings and replay all their recorded request times to the second. The 6,769 December requests supply arrival times. The 6,757 with known outcomes supply the observed outcome summaries and select the comparable simulated outcomes. Calculate each outcome per morning, then average across mornings. A request whose outcome is unknown still uses its recorded time in the simulation.
+
+For the 09:00 check, use recorded service intervals and agent identifiers locally to count each agent once. For each agent already busy at 09:00, the simulator delays their first availability until the latest end of their calls in progress. The data reader returns remaining service times and activity counts. A separate check counts callers who had joined before 09:00 and were still waiting just after 09:00. The staffing experiment holds one common queue and compares starting with all agents free with starting with the recorded calls already in progress. The log shows how many agents were busy at the same time. An availability roster would also include idle agents.
